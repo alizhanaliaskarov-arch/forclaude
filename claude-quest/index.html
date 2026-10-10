@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Claude Quest</title>
+<style>
+:root{--bg:#1a1714;--panel:#252019;--panel2:#2e2820;--text:#f2ece4;--mut:#a89f93;--acc:#d97757;--ok:#7bc47f;--bad:#e5645c;--line:#3d352b}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;min-height:100vh}
+.wrap{max-width:760px;margin:0 auto;padding:20px 16px 60px}
+h1{font-size:28px;margin:0}h2{margin:0 0 4px}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+header{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:18px}
+.logo{color:var(--acc)}
+.stats{display:flex;gap:14px;color:var(--mut);font-size:14px}
+.stats b{color:var(--text)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;margin-bottom:12px}
+.lvl{display:flex;align-items:center;gap:14px;cursor:pointer;transition:.15s}
+.lvl:hover{border-color:var(--acc);transform:translateY(-1px)}
+.lvl.locked{opacity:.4;cursor:not-allowed}.lvl.locked:hover{transform:none;border-color:var(--line)}
+.ico{font-size:30px;width:48px;text-align:center}
+.lvl p{margin:0;color:var(--mut);font-size:14px}
+.stars{margin-left:auto;color:#f5c04a;white-space:nowrap}
+button{font:inherit;color:var(--text);background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 14px;cursor:pointer;transition:.12s}
+button:hover:not(:disabled){border-color:var(--acc)}
+button.pri{background:var(--acc);border-color:var(--acc);color:#1a1714;font-weight:600}
+button:disabled{cursor:default}
+.opts{display:grid;gap:8px;margin-top:14px}
+.opts button{text-align:left}
+.opts button.ok{border-color:var(--ok);background:#233322}
+.opts button.bad{border-color:var(--bad);background:#3a2220}
+.bar{height:8px;background:var(--panel2);border-radius:6px;overflow:hidden;margin-bottom:14px}
+.bar i{display:block;height:100%;background:var(--acc);transition:width .3s}
+.top{display:flex;justify-content:space-between;color:var(--mut);font-size:14px;margin-bottom:8px}
+.q{font-size:19px;margin:0}
+pre.code{background:#120f0c;border:1px solid var(--line);border-radius:8px;padding:10px 12px;margin:12px 0 0;white-space:pre-wrap;font-size:14px;color:#e8dccb}
+.fb{margin-top:14px;padding:12px 14px;border-radius:10px;font-size:15px}
+.fb.ok{background:#1f2e1f;border:1px solid var(--ok)}.fb.bad{background:#341e1c;border:1px solid var(--bad)}
+.term{display:flex;gap:8px;align-items:center;background:#120f0c;border:1px solid var(--line);border-radius:10px;padding:8px 12px;margin-top:14px}
+.term span{color:var(--acc)}
+.term input{flex:1;background:none;border:0;outline:0;color:var(--text);font:inherit;font-family:ui-monospace,Menlo,Consolas,monospace}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.chips button{font-size:14px}
+.chips button.used{opacity:.3}
+.slots{min-height:44px;border:1px dashed var(--line);border-radius:10px;padding:8px;display:flex;flex-direction:column;gap:6px;margin-top:14px}
+.slots div{background:var(--panel2);border-radius:8px;padding:6px 10px;font-size:14px}
+.row{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
+.center{text-align:center}.big{font-size:56px}
+.mut{color:var(--mut)}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.shake{animation:shake .25s}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<script>
+/* ---------- Контент ---------- */
+const LEVELS = [
+{id:'basics', ico:'🧠', title:'Основы Claude', desc:'Что такое Claude, токены, контекст, модели',
+ qs:[
+ {t:'choice',q:'Что такое «контекстное окно» модели?',o:['Объём текста (в токенах), который модель «видит» за один раз: промпт, история и ответ','Окно браузера, где открыт чат','Список разрешённых сайтов','Размер файла с обучающими данными'],a:0,why:'Всё, что вы и Claude написали в диалоге + файлы + ответы, должно помещаться в контекстное окно. Когда оно заполняется, качество падает или нужно сжимать историю.'},
+ {t:'choice',q:'Что такое токен?',o:['Пароль для API','Фрагмент текста (часть слова, слово или символ), единица, в которой модель читает и считается стоимость','Один вопрос пользователя','Секундный интервал ответа'],a:1,why:'Токены — «кусочки» текста. По ним считается и длина контекста, и оплата API.'},
+ {t:'choice',q:'Семейство моделей Claude обычно делится на уровни. Как правильно выбирать?',o:['Всегда самую большую — других не бывает','Лёгкая быстрая модель — для простых и массовых задач, сильная — для сложных рассуждений и кода','Выбор не влияет ни на скорость, ни на цену','Только по цвету логотипа'],a:1,why:'Компромисс «скорость/цена ↔ качество». Haiku-класс — быстро и дёшево, Sonnet — баланс, Opus-класс — максимум возможностей.'},
+ {t:'choice',q:'Claude уверенно назвал несуществующую библиотеку. Как это называется и что делать?',o:['«Галлюцинация» — проверять факты и просить ссылаться на источники/код, который можно запустить','«Фича» — так и задумано','Взлом — срочно сменить пароль','Устаревший кэш браузера'],a:0,why:'LLM может генерировать правдоподобные, но неверные утверждения. Проверяйте результат: запускайте код, тесты, сверяйтесь с документацией.'},
+ {t:'choice',q:'Помнит ли Claude прошлые чаты сам по себе между отдельными сессиями?',o:['Да, всегда и всё','По умолчанию нет — каждая сессия начинается с чистого контекста; нужна память/файлы (например, CLAUDE.md)','Только по пятницам','Помнит, но только картинки'],a:1,why:'Поэтому в Claude Code важны файлы вроде CLAUDE.md: они подгружаются в начале каждой сессии.'},
+ {t:'choice',q:'Что делает «системный промпт»?',o:['Перезагружает компьютер','Задаёт роль, правила и стиль ответов до начала диалога с пользователем','Шифрует ответы','Заменяет API-ключ'],a:1,why:'Системный промпт — инструкции верхнего уровня: кто вы, как отвечать, какие ограничения соблюдать.'}
+ ]},
+{id:'prompt', ico:'✍️', title:'Искусство промптов', desc:'Как формулировать задачи, чтобы получать хороший результат',
+ qs:[
+ {t:'choice',q:'Какой промпт лучше?',o:['«Сделай сайт»','«Сделай одностраничный лендинг кофейни на HTML+CSS без фреймворков: заголовок, меню из 5 позиций, форма брони, тёмная тема. Адаптивно для телефона.»','«Сделай хороший красивый сайт, ты же умный»','«САЙТ!!! СРОЧНО!!!»'],a:1,why:'Конкретная цель, ограничения (стек), состав и критерии результата. Чем яснее задача, тем меньше итераций.'},
+ {t:'choice',q:'Зачем давать модели 2–3 примера желаемого ответа (few-shot)?',o:['Чтобы увеличить счёт за токены','Примеры лучше любого описания показывают нужный формат и стиль','Это обязательно для запуска','Примеры не влияют на результат'],a:1,why:'Показывать — надёжнее, чем рассказывать: модель повторяет паттерн формата, тона и структуры.'},
+ {t:'choice',q:'Для чего в промптах часто используют XML-теги, например <document>…</document>?',o:['Это единственный язык, который понимает Claude','Чётко отделить данные/инструкции друг от друга и избежать путаницы','Чтобы текст был красным','Для шифрования'],a:1,why:'Теги вроде <instructions>, <document>, <example> помогают структурировать большой промпт, особенно когда внутри есть чужой текст.'},
+ {t:'choice',q:'Ответ получился не таким. Что эффективнее всего?',o:['Написать тот же промпт ещё 10 раз','Уточнить: что именно не так, чего вы ожидали, и добавить недостающие требования','Сменить браузер','Обидеться'],a:1,why:'Промптинг — итеративный процесс. Конкретная обратная связь («короче, без жаргона, в виде таблицы») быстро улучшает результат.'},
+ {t:'choice',q:'Что полезно сказать Claude при сложной задаче?',o:['«Не думай»','«Сначала подумай пошагово / составь план, затем выполни»','«Отвечай как угодно»','«Сделай всё за одну секунду»'],a:1,why:'Просьба рассуждать пошагово (или режим extended thinking) улучшает качество на задачах с логикой, математикой и кодом.'},
+ {t:'order',q:'Расставьте части хорошего промпта в логичном порядке:',items:['Роль и контекст ситуации','Чёткая задача','Входные данные / материалы','Ограничения и формат ответа'],why:'Контекст → задача → данные → формат. Такая структура легко читается и модели, и вам.'}
+ ]},
+{id:'cc', ico:'⌨️', title:'Claude Code: команды', desc:'Слэш-команды, флаги и горячие клавиши',
+ qs:[
+ {t:'cmd',q:'Какой командой в терминале запускается Claude Code?',ok:['claude'],hint:'Название агента, одно слово',why:'Просто `claude` в папке проекта. Установка: npm install -g @anthropic-ai/claude-code.'},
+ {t:'cmd',q:'Внутри сессии нужно создать стартовый файл CLAUDE.md для проекта. Какая слэш-команда?',ok:['/init','init'],hint:'От слова initialize',why:'/init анализирует кодовую базу и создаёт CLAUDE.md с описанием проекта, командами сборки и тестов.'},
+ {t:'cmd',q:'Контекст забит старой перепиской, но тема та же. Какая команда сожмёт историю в краткое резюме?',ok:['/compact','compact'],hint:'«Уплотнить»',why:'/compact сохраняет суть диалога, освобождая место в контексте. Можно добавить инструкцию: /compact оставь детали про API.'},
+ {t:'cmd',q:'Начинаете совсем новую задачу. Какая команда полностью очищает контекст?',ok:['/clear','clear'],hint:'Очистить',why:'/clear стирает историю диалога. Делайте это между несвязанными задачами — меньше мусора, точнее ответы.'},
+ {t:'cmd',q:'Как запустить Claude Code одной командой без интерактива («headless») с вопросом «объясни этот репозиторий»? Введите флаг, который включает режим печати.',ok:['-p','claude -p','claude -p "объясни этот репозиторий"','--print','claude --print'],hint:'Одна буква после дефиса: print',why:'`claude -p "запрос"` печатает ответ и завершается — удобно для скриптов, CI и пайпов: git diff | claude -p "сделай ревью".'},
+ {t:'cmd',q:'Какой командой возобновить последнюю сессию из терминала? (флаг продолжения)',ok:['claude -c','claude --continue','-c','--continue'],hint:'continue',why:'`claude -c` продолжает последний диалог, `claude --resume` (или /resume) даёт выбрать из списка.'},
+ {t:'choice',q:'Как сослаться на конкретный файл в запросе?',o:['@путь/к/файлу','$file','#файл','&&file'],a:0,why:'@src/app.ts добавляет файл в контекст. Это точнее, чем «найди там где-то».'},
+ {t:'choice',q:'Что делает Shift+Tab в Claude Code?',o:['Закрывает программу','Переключает режимы разрешений, в том числе plan mode (только планирование, без правок)','Отправляет сообщение','Включает тёмную тему'],a:1,why:'Режимы: обычный (спрашивает разрешения), авто-принятие правок и plan mode. Plan mode — безопасно обсудить план до изменений.'},
+ {t:'choice',q:'Claude пошёл не туда посреди ответа. Что нажать?',o:['Ctrl+Alt+Del','Esc — прервать; двойной Esc — вернуться к более раннему сообщению','Закрыть ноутбук','Ничего, ждать до конца'],a:1,why:'Esc останавливает текущее действие, не теряя контекст. Двойной Esc открывает перемотку к прошлому сообщению.'}
+ ]},
+{id:'ext', ico:'🧩', title:'Настройка и расширения', desc:'CLAUDE.md, hooks, MCP, skills, субагенты',
+ qs:[
+ {t:'choice',q:'Зачем нужен CLAUDE.md?',o:['Это просто README для людей','Постоянные инструкции для Claude: стек, команды сборки/тестов, правила кода — подгружаются в каждую сессию','Журнал ошибок','Файл лицензии'],a:1,why:'Пишите коротко и конкретно: «тесты — npm test», «стиль — 2 пробела». Это экономит объяснения в каждой сессии.'},
+ {t:'choice',q:'Что такое hooks в Claude Code?',o:['Рыболовные принадлежности','Shell-команды, которые автоматически запускаются на событиях (до/после вызова инструмента, при отправке промпта и т.д.)','Облачное хранилище','Тип подписки'],a:1,why:'Hook гарантированно выполняется (в отличие от просьбы «не забудь»). Пример: после каждой правки файла автоматически запускать форматтер или линтер.'},
+ {t:'choice',q:'Что такое MCP (Model Context Protocol)?',o:['Модель для рисования','Открытый протокол подключения к Claude внешних инструментов и данных (GitHub, БД, Notion, браузер…)','Формат сжатия изображений','Название тарифа'],a:1,why:'MCP-серверы дают Claude новые «руки». Добавить можно командой `claude mcp add` или через /mcp.'},
+ {t:'choice',q:'Для чего нужны субагенты (subagents)?',o:['Для рекламы','Узкоспециализированные помощники с собственным контекстом и инструкциями: код-ревью, поиск по кодовой базе и т.п.','Для резервных копий','Это то же самое, что токены'],a:1,why:'Субагент работает в отдельном контексте и возвращает краткий итог — основной диалог не засоряется. Определяются в .claude/agents/*.md.'},
+ {t:'choice',q:'Как хранить повторяющиеся инструкции-«рецепты» (например, процесс релиза), которые Claude подгружает при необходимости?',o:['Skills — папка с SKILL.md в .claude/skills/','Записать на листочке','В названии ветки','Это невозможно'],a:0,why:'Skill — набор инструкций и скриптов, который Claude подключает, когда задача подходит под описание. Доступны и пользовательские слэш-команды в .claude/commands/.'},
+ {t:'choice',q:'Где лежат настройки проекта, которые стоит коммитить в git для всей команды?',o:['.claude/settings.json','.claude/settings.local.json','~/.bashrc','В переменной окружения HOME'],a:0,why:'settings.json — общие командные настройки; settings.local.json — личные и не для коммита; ~/.claude/settings.json — глобальные.'},
+ {t:'order',q:'Расставьте безопасный рабочий процесс изменения кода в Claude Code:',items:['Открыть plan mode и обсудить план','Утвердить план и разрешить правки','Запустить тесты','Просмотреть diff и сделать коммит'],why:'Explore → Plan → Code → Verify/Commit. Проверка тестами и ревью diff — обязательная часть.'}
+ ]},
+{id:'boss', ico:'🐉', title:'Босс: Баг в проде', desc:'Сценарий: решайте как опытный пользователь Claude Code',
+ qs:[
+ {t:'choice',q:'🐉 Пятница, 17:55. В проде падает оплата. Вы открываете проект. Что делаете первым?',o:['Прошу Claude «почини всё» без деталей','Даю Claude стек-трейс и шаги воспроизведения, прошу сначала найти причину в plan mode','Удаляю папку с тестами','Откатываю весь репозиторий на 2019 год'],a:1,why:'Хороший старт — симптом + точные данные + режим «сначала разберись». Так Claude не правит наугад.'},
+ {t:'choice',q:'🐉 Claude нашёл причину и предлагает правку в 12 файлах, вы ожидали 1–2. Что делаете?',o:['Принимаю не глядя','Прошу объяснить, почему так много, и ограничить правку минимально необходимой','Игнорирую и пишу сам','Увеличиваю громкость'],a:1,why:'Вы отвечаете за результат. Просите минимальный дифф, смотрите изменения — не принимайте вслепую.'},
+ {t:'choice',q:'🐉 Как убедиться, что фикс работает и ничего не сломано?',o:['Попросить Claude написать тест на баг и запустить весь набор тестов','Поверить на слово','Подождать до понедельника','Перезагрузить сервер'],a:0,why:'Регрессионный тест воспроизводит баг до фикса и проходит после. Дайте Claude способ проверять себя — результат резко лучше.'},
+ {t:'cmd',q:'🐉 Контекст раздулся от логов. Быстро сжать историю, сохранив суть. Команда?',ok:['/compact','compact'],hint:'Уплотнить',why:'/compact — спасает длинную сессию без потери нити.'},
+ {t:'order',q:'🐉 Финал: расставьте шаги выпуска исправления:',items:['Воспроизвести баг и написать падающий тест','Исправить код','Убедиться, что тесты зелёные','Сделать коммит и открыть pull request'],why:'Красный тест → фикс → зелёный тест → PR. Классика, и Claude Code прекрасно в этом помогает.'}
+ ]}
+];
+
+const RANKS=[[0,'Новичок 🐣'],[100,'Промпт-ученик 📘'],[250,'Кодер с Claude 💻'],[400,'Мастер Claude Code ⚡'],[520,'Архитектор агентов 🏆']];
+
+/* ---------- Состояние ---------- */
+let save={xp:0,stars:{}};
+try{const s=JSON.parse(localStorage.getItem('claudeQuest'));if(s&&typeof s==='object')save=Object.assign(save,s)}catch(e){}
+const persist=()=>{try{localStorage.setItem('claudeQuest',JSON.stringify(save))}catch(e){}};
+const $=document.getElementById('app');
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+const rank=()=>RANKS.filter(r=>save.xp>=r[0]).pop()[1];
+const totalStars=()=>Object.values(save.stars).reduce((a,b)=>a+b,0);
+
+/* ---------- Экран меню ---------- */
+function menu(){
+  $.innerHTML=`<header><h1><span class="logo">✺</span> Claude Quest</h1>
+    <div class="stats"><span>XP: <b>${save.xp}</b></span><span>⭐ <b>${totalStars()}/${LEVELS.length*3}</b></span><span><b>${rank()}</b></span></div></header>
+    <p class="mut">Учись работать с Claude и Claude Code: проходи уровни, отвечай на вопросы, копи XP. У тебя 3 жизни на уровень.</p>
+    <div id="list"></div>
+    <div class="row"><button id="reset">Сбросить прогресс</button></div>`;
+  const list=document.getElementById('list');
+  LEVELS.forEach((L,i)=>{
+    const prev=i===0||save.stars[LEVELS[i-1].id]>0;
+    const st=save.stars[L.id]||0;
+    const d=document.createElement('div');
+    d.className='card lvl'+(prev?'':' locked');
+    d.innerHTML=`<div class="ico">${prev?L.ico:'🔒'}</div><div><h2>${i+1}. ${L.title}</h2><p>${L.desc} · ${L.qs.length} заданий</p></div><div class="stars">${'★'.repeat(st)}${'☆'.repeat(3-st)}</div>`;
+    if(prev)d.onclick=()=>play(L);
+    list.appendChild(d);
+  });
+  document.getElementById('reset').onclick=()=>{if(confirm('Сбросить весь прогресс?')){save={xp:0,stars:{}};persist();menu()}};
+}
+
+/* ---------- Игровой процесс ---------- */
+function play(L){
+  const g={i:0,lives:3,mistakes:0,streak:0,gained:0,qs:shuffle(L.qs).sort((a,b)=>(a.t==='order')-(b.t==='order'))};
+  const hearts=()=>'❤️'.repeat(g.lives)+'🖤'.repeat(3-g.lives);
+
+  function render(){
+    if(g.lives<=0)return lose();
+    if(g.i>=g.qs.length)return win();
+    const q=g.qs[g.i];
+    $.innerHTML=`<div class="top"><span>${L.ico} ${L.title}</span><span>${hearts()} · 🔥${g.streak}</span></div>
+      <div class="bar"><i style="width:${g.i/g.qs.length*100}%"></i></div>
+      <div class="card" id="card"><p class="q">${esc(q.q)}</p><div id="body"></div><div id="fb"></div></div>
+      <div class="row"><button id="quit">← В меню</button></div>`;
+    document.getElementById('quit').onclick=menu;
+    ({choice:rChoice,cmd:rCmd,order:rOrder})[q.t](q,document.getElementById('body'));
+  }
+
+  function answer(q,ok,reveal){
+    const fb=document.getElementById('fb');
+    if(ok){g.streak++;const x=10+Math.min(g.streak-1,5)*2;g.gained+=x;save.xp+=x}
+    else{g.lives--;g.mistakes++;g.streak=0;document.getElementById('card').classList.add('shake')}
+    persist();
+    fb.innerHTML=`<div class="fb ${ok?'ok':'bad'}"><b>${ok?'✅ Верно!'+(g.streak>1?' Серия x'+g.streak:''):'❌ Не совсем.'}</b>${reveal?'<br>'+reveal:''}<br>${esc(q.why).replace(/`([^`]+)`/g,'<code class="mono">$1</code>')}</div>
+      <div class="row"><button class="pri" id="next">${g.lives<=0?'Дальше':'Продолжить'} →</button></div>`;
+    const n=document.getElementById('next');n.focus();n.onclick=()=>{g.i++;render()};
+  }
+
+  function rChoice(q,el){
+    const opts=shuffle(q.o.map((t,i)=>({t,c:i===q.a})));
+    el.innerHTML='<div class="opts"></div>';
+    const box=el.firstChild;
+    opts.forEach(o=>{
+      const b=document.createElement('button');b.textContent=o.t;
+      b.onclick=()=>{
+        [...box.children].forEach((c,i)=>{c.disabled=true;if(opts[i].c)c.classList.add('ok')});
+        if(!o.c)b.classList.add('bad');
+        answer(q,o.c);
+      };
+      box.appendChild(b);
+    });
+  }
+
+  function rCmd(q,el){
+    el.innerHTML=`<div class="term mono"><span>$</span><input id="in" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="введите команду…"><button class="pri" id="go">Enter</button></div>
+      <div class="row"><button id="hint">💡 Подсказка</button></div><div id="hintbox" class="mut" style="margin-top:8px"></div>`;
+    const inp=document.getElementById('in');inp.focus();
+    document.getElementById('hint').onclick=()=>{document.getElementById('hintbox').textContent=q.hint};
+    const submit=()=>{
+      const v=inp.value.trim().toLowerCase().replace(/\s+/g,' ');
+      if(!v)return;
+      const ok=q.ok.some(a=>a.toLowerCase()===v)||(q.ok.some(a=>v.startsWith(a.toLowerCase()+' ')&&a.startsWith('/')));
+      inp.disabled=true;document.getElementById('go').disabled=true;document.getElementById('hint').disabled=true;
+      answer(q,ok,ok?'':'Правильный ответ: <code class="mono">'+esc(q.ok[0])+'</code>');
+    };
+    document.getElementById('go').onclick=submit;
+    inp.onkeydown=e=>{if(e.key==='Enter')submit()};
+  }
+
+  function rOrder(q,el){
+    const picked=[];const pool=shuffle(q.items);
+    el.innerHTML='<div class="mut" style="margin-top:10px;font-size:14px">Нажимайте шаги в правильном порядке:</div><div class="chips" id="pool"></div><div class="slots" id="slots"></div><div class="row"><button id="undo">↩ Сбросить</button></div>';
+    const poolEl=document.getElementById('pool'),slots=document.getElementById('slots');
+    const draw=()=>{
+      poolEl.innerHTML='';
+      pool.forEach(t=>{const b=document.createElement('button');b.textContent=t;
+        if(picked.includes(t))b.classList.add('used');
+        b.onclick=()=>{
+          if(picked.includes(t))return;
+          picked.push(t);draw();
+          if(picked.length===pool.length){
+            const ok=picked.every((x,i)=>x===q.items[i]);
+            [...poolEl.children].forEach(c=>c.disabled=true);document.getElementById('undo').disabled=true;
+            answer(q,ok,ok?'':'Правильный порядок:<br>'+q.items.map((x,i)=>(i+1)+'. '+esc(x)).join('<br>'));
+          }
+        };poolEl.appendChild(b)});
+      slots.innerHTML=picked.map((t,i)=>`<div>${i+1}. ${esc(t)}</div>`).join('');
+    };
+    document.getElementById('undo').onclick=()=>{picked.length=0;draw()};
+    draw();
+  }
+
+  function win(){
+    const stars=g.mistakes===0?3:g.mistakes<=1?2:1;
+    save.stars[L.id]=Math.max(save.stars[L.id]||0,stars);persist();
+    const i=LEVELS.indexOf(L),next=LEVELS[i+1];
+    const done=LEVELS.every(l=>save.stars[l.id]>0);
+    $.innerHTML=`<div class="card center"><div class="big">${done&&!next?'🏆':'🎉'}</div><h2>Уровень пройден!</h2>
+      <p class="stars" style="font-size:28px;margin:6px 0">${'★'.repeat(stars)}${'☆'.repeat(3-stars)}</p>
+      <p>+${g.gained} XP · всего ${save.xp} XP<br><b>${rank()}</b></p>
+      ${done&&!next?'<p>Ты прошёл всю игру! Теперь открой Claude Code и примени это на реальном проекте: начни с <code class="mono">/init</code>.</p>':''}
+      <div class="row" style="justify-content:center">${next?'<button class="pri" id="n">Следующий уровень →</button>':''}<button id="r">Ещё раз</button><button id="m">Меню</button></div></div>`;
+    if(next)document.getElementById('n').onclick=()=>play(next);
+    document.getElementById('r').onclick=()=>play(L);
+    document.getElementById('m').onclick=menu;
+  }
+
+  function lose(){
+    $.innerHTML=`<div class="card center"><div class="big">💀</div><h2>Жизни закончились</h2><p class="mut">Ничего страшного — ошибки лучший учитель. Повтори материал и попробуй снова.</p>
+      <div class="row" style="justify-content:center"><button class="pri" id="r">Попробовать снова</button><button id="m">Меню</button></div></div>`;
+    document.getElementById('r').onclick=()=>play(L);document.getElementById('m').onclick=menu;
+  }
+  render();
+}
+menu();
+</script>
+</body>
+</html>
