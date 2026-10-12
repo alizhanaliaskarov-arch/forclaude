@@ -52,12 +52,24 @@ export const S16Final: React.FC<SceneProps> = ({f}) => {
         <Chaikhana f={f} />
         {/* hands offering the piala */}
         <g transform={`translate(960, 760) scale(${grow}) translate(-960, -760)`}>
-          <path d="M600,1080 Q640,860 780,800 L900,820 Q860,900 820,1080 Z" fill="#B97A4C" />
-          <path d="M1320,1080 Q1280,860 1140,800 L1020,820 Q1060,900 1100,1080 Z" fill="#B97A4C" />
-          <path d="M560,1080 Q580,960 640,900 L760,1080 Z" fill="#1F5FA8" />
-          <path d="M1360,1080 Q1340,960 1280,900 L1160,1080 Z" fill="#1F5FA8" />
+          {[1, -1].map((side) => (
+            <g key={side} transform={`translate(960, 0) scale(${side}, 1) translate(-960, 0)`}>
+              {/* forearm in an azure sleeve with an ikat cuff */}
+              <path d="M560,1100 L700,1100 L900,900 L820,830 Z" fill="#B97A4C" />
+              <path d="M520,1100 L700,1100 L800,1000 L700,930 Z" fill={C.azure} />
+              <path d="M700,930 L800,1000 L770,1030 L668,962 Z" fill={C.gold} />
+              <path d="M690,945 L790,1012 M680,955 L782,1021" stroke={C.turqDeep} strokeWidth={5} strokeDasharray="10 8" />
+              {/* palm cupping the bowl */}
+              <ellipse cx={860} cy={880} rx={120} ry={62} fill="#C48A5A" transform="rotate(-24 860 880)" />
+            </g>
+          ))}
           <Piala cx={960} y={700} r={190} fill={0.5} id="s16p" />
-          <path d="M780,820 Q780,780 830,770 L850,820 Z M1140,820 Q1140,780 1090,770 L1070,820 Z" fill="#B97A4C" />
+          {[1, -1].map((side) => (
+            <g key={side} transform={`translate(960, 0) scale(${side}, 1) translate(-960, 0)`}>
+              {/* thumbs over the rim */}
+              <path d="M790,860 Q770,790 812,770 Q836,780 832,820 Z" fill="#C48A5A" />
+            </g>
+          ))}
           {/* steam */}
           {Array.from({length: 5}).map((_, i) => {
             const life = ((f * 0.8 + i * 18) % 90) / 90;
