@@ -4,7 +4,7 @@ import type {SceneProps} from '../Root';
 import {C, F, clamp, easeOutBack, ip, rnd} from '../theme';
 import {IkatStrip, MajolicaCorners, Sun} from '../components';
 
-const STAMPS = [60, 42, 27]; // local frame per card
+const STAMPS = [60, 60, 36]; // local frame per card (right after the myth is spoken)
 const CARD = 120;
 
 const Ski: React.FC<{t: number}> = ({t}) => {

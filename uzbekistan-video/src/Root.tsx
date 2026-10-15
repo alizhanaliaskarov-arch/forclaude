@@ -146,7 +146,7 @@ const Video: React.FC<{captions: boolean}> = ({captions}) => {
       <IkatWipe f={frame - s(98)} half={16} angle={8} wave />
       <Flash f={frame - s(119)} color="#FFFFFF" inF={3} outF={16} />
       {captions ? <Captions frame={frame} cues={CUES} fps={FPS} /> : null}
-      <Audio src={staticFile('soundtrack.wav')} />
+      <Audio src={staticFile(captions ? 'soundtrack_vo.wav' : 'soundtrack.wav')} />
     </AbsoluteFill>
   );
 };
@@ -162,7 +162,7 @@ export const Root: React.FC = () => (
       height={H}
       defaultProps={{captions: true}}
     />
-    {/* clean version without subtitles, for recording your own voice-over */}
+    {/* clean version: music only, no voice-over and no subtitles — for recording your own voice */}
     <Composition
       id="UzbekistanClean"
       component={Video}

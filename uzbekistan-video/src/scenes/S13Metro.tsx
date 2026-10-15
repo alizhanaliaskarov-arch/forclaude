@@ -127,11 +127,11 @@ const PhoneHand: React.FC<{x: number; y: number; rot: number}> = ({x, y, rot}) =
 export const S13Metro: React.FC<SceneProps> = ({f}) => {
   const dolly = ip(f, [0, 300], [1, 1.32], easeInOut);
   const lights = ip(f, [4, 50], [0.15, 1]);
-  const phones = ip(f, [140, 166], [0, 1], easeOutBack) * (1 - ip(f, [262, 280], [0, 1]));
+  const phones = ip(f, [140, 166], [0, 1], easeOutBack) * (1 - ip(f, [214, 230], [0, 1]));
   const flash = f >= 178 && f < 183 ? 1 - (f - 178) / 5 : f >= 206 && f < 211 ? 1 - (f - 206) / 5 : 0;
-  const card = ip(f, [282, 304], [0, 1], easeOutBack);
-  const b1 = ip(f, [300, 330], [0, 8.0], easeInOut);
-  const b2 = ip(f, [312, 350], [0, 11.7], easeInOut);
+  const card = ip(f, [228, 250], [0, 1], easeOutBack);
+  const b1 = ip(f, [246, 276], [0, 8.0], easeInOut);
+  const b2 = ip(f, [258, 296], [0, 11.7], easeInOut);
   return (
     <AbsoluteFill style={{background: '#000'}}>
       <svg width={1920} height={1080} viewBox="0 0 1920 1080" style={{position: 'absolute', inset: 0}}>
@@ -175,9 +175,9 @@ export const S13Metro: React.FC<SceneProps> = ({f}) => {
           </g>
         ) : null}
       </svg>
-      <Title text="Больше 40 лет — ни одного фото" f={f} start={30} end={282} x={110} y={70} size={70} color="#fff" shadow maxWidth={1700} accent="40" accentColor={C.goldLight} />
-      <Pill text="1977 → 2018" x={112} y={210} anchor="left" f={f} start={150} end={282} bg={C.gold} color={C.ink} size={36} />
-      <Title text="Рекорд туристов" f={f} start={290} x={110} y={70} size={76} color="#fff" shadow />
+      <Title text="Больше 40 лет — ни одного фото" f={f} start={30} end={230} x={110} y={70} size={70} color="#fff" shadow maxWidth={1700} accent="40" accentColor={C.goldLight} />
+      <Pill text="1977 → 2018" x={112} y={210} anchor="left" f={f} start={150} end={230} bg={C.gold} color={C.ink} size={36} />
+      <Title text="Рекорд туристов" f={f} start={236} x={110} y={70} size={76} color="#fff" shadow />
     </AbsoluteFill>
   );
 };

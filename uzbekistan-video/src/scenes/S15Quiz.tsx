@@ -9,12 +9,12 @@ const QS: [string, string][] = [
   ['Почему чая — полпиалы?', 'из уважения'],
   ['Вторая страна без моря дважды?', 'Лихтенштейн'],
 ];
-const Q0 = 48;
-const QLEN = 102;
-const THINK = 75;
+const Q0 = 62;
+const QLEN = 98;
+const THINK = 78;
 
 export const S15Quiz: React.FC<SceneProps> = ({f}) => {
-  const pauseOut = ip(f, [40, 50], [0, 1]);
+  const pauseOut = ip(f, [54, 64], [0, 1]);
   const qi = clamp(Math.floor((f - Q0) / QLEN), 0, 2);
   const t = f - Q0 - qi * QLEN;
   const inQ = f >= Q0;
@@ -30,7 +30,7 @@ export const S15Quiz: React.FC<SceneProps> = ({f}) => {
         <IkatStrip x={0} y={0} width={1920} height={70} seed={21} bg={C.turqDeep} />
         <IkatStrip x={0} y={1010} width={1920} height={70} seed={22} bg={C.turqDeep} />
         {/* pause */}
-        {f < 52 ? (
+        {f < 66 ? (
           <g transform={`translate(960, 470) scale(${easeOutBack(clamp(f / 12)) * (1 - pauseOut)})`}>
             <circle r={150} fill="#fff" />
             <rect x={-56} y={-62} width={36} height={124} rx={10} fill={C.azureDeep} />
@@ -66,7 +66,7 @@ export const S15Quiz: React.FC<SceneProps> = ({f}) => {
           </g>
         ) : null}
       </svg>
-      {f < 52 ? (
+      {f < 66 ? (
         <div
           style={{
             position: 'absolute',

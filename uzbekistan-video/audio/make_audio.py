@@ -430,18 +430,18 @@ for k in range(5):  # chandeliers switching on
 for tsh in (139.93, 140.87):  # camera shutters
     click(tsh, 0.2, 4000, 0.008)
     click(tsh + 0.07, 0.16, 3000, 0.01)
-bell(144.0, 1318.5, 0.05, 1.5)
-for ts in (149.0, 152.4, 155.9):  # МИФ stamps
+bell(142.4, 1318.5, 0.05, 1.5)
+for ts in (149.0, 153.0, 156.2):  # МИФ stamps
     thud(ts, 0.6)
 for tw in (151.0, 155.0):  # card swipes
     whoosh(tw, 0.45, 0.22)
 whoosh(158.8, 0.4, 0.2)  # iris
 click(159.2, 0.18, 1500, 0.03)  # pause tap
 for q in range(3):  # quiz ticks + answer ding
-    q0 = 159.0 + (48 + q * 102) / 30
+    q0 = 159.0 + (62 + q * 98) / 30
     for k in range(3):
         tick(q0 + k, 0.16)
-    bell(q0 + 2.5, 1760.0, 0.08, 1.4)
+    bell(q0 + 78 / 30, 1760.0, 0.08, 1.4)
 whoosh(170.6, 0.6, 0.2)
 
 # ───────────── mix ─────────────
