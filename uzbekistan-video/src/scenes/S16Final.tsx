@@ -128,21 +128,6 @@ export const S16Final: React.FC<SceneProps> = ({f}) => {
           >
             Приезжайте.
           </div>
-          <div
-            style={{
-              position: 'absolute',
-              top: 892,
-              width: '100%',
-              textAlign: 'center',
-              fontFamily: F.body,
-              fontWeight: 500,
-              fontSize: 22,
-              color: C.inkSoft,
-              opacity: ip(f, [196, 210], [0, 0.85]),
-            }}
-          >
-            Голос: Ruslan (корпус RUSLAN, CC BY-NC-SA 4.0) · Карты: Natural Earth · Музыка: оригинальная
-          </div>
         </>
       ) : null}
     </AbsoluteFill>
