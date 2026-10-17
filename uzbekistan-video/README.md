@@ -10,11 +10,11 @@
 - Настоящие карты: глобус и карты Центральной Азии построены по данным Natural Earth
   (пакет [`world-atlas`](https://github.com/topojson/world-atlas), общественное достояние) через `d3-geo`.
   Контуры Аральского моря — упрощённая схема (так и подписано в кадре).
-- Озвучка: русский синтезированный голос RHVoice «Александр» (aleksandr-hq, диктор Александр Карлов;
-  голос распространяется по лицензии CC BY-SA 4.0 — указание авторства есть в финальном кадре),
-  музыка автоматически приглушается под голосом. Субтитры внизу кадра идут точно по озвучке.
-  Есть и чистая версия — только музыка, без голоса и субтитров, под запись своего голоса
-  (композиция `UzbekistanClean`).
+- Озвучка: нейросетевой русский голос (Piper / VITS, голос «ruslan», обучен на корпусе RUSLAN —
+  записях профессионального диктора; данные под CC BY-NC-SA 4.0, указание есть в финальном кадре).
+  Ударения в редких именах выставлены вручную, голос прогнан через «студийную» обработку,
+  музыка автоматически приглушается под речью. Субтитры идут точно по озвучке.
+  Есть и чистая версия — только музыка, без голоса и субтитров (композиция `UzbekistanClean`).
 - Палитра: бирюза `#1AA7A1`, лазурь `#1F5FA8`, золото `#D4A537`, охра `#C4772E`, тёплый белый `#FBF8F2`.
   Шрифты: Unbounded (заголовки) и Manrope (субтитры, подписи) — оба SIL OFL, через `@fontsource`.
 
@@ -32,25 +32,24 @@
 Чтобы поставить свой трек, замените этот файл (длина 3:00) или поменяйте `src` у `<Audio>` в `src/Root.tsx`.
 
 ## Озвучка
-Скрипт [`audio/make_voice.py`](audio/make_voice.py) читает реплики голосом RHVoice, подбирает темп по сценам,
-чтобы реплики не наезжали друг на друга, и пишет:
-`public/voiceover.wav` (только голос), `public/soundtrack_vo.wav` (музыка с приглушением + голос)
-и `src/voice-timing.json` (тайминг реплик — по нему строятся субтитры).
-Сборка RHVoice (один раз):
+Скрипт [`audio/make_voice.py`](audio/make_voice.py) читает реплики нейросетевым голосом Piper «ruslan»,
+исправляет ударения (аль-Хорезми́, Бабу́р, Бухара́, Кызылку́м, махалля́, Навру́з, атла́с, Ича́н-Кала́ …),
+держит естественный темп диктора (ускоряет только сцену, которая не помещается) и пропускает голос через
+студийную цепочку: EQ, де-эссер, компрессор, немного «воздуха», маленькая комната, тихий фон помещения
+и мягкие вдохи перед фразами. Пишет `public/voiceover.wav`, `public/soundtrack_vo.wav` и `src/voice-timing.json`.
 ```bash
-git clone --depth 1 --branch 1.14.0 --recurse-submodules --shallow-submodules https://github.com/RHVoice/RHVoice.git
-cd RHVoice && pip install scons
-scons audio_libs=none prefix=$HOME/rhvoice && scons audio_libs=none prefix=$HOME/rhvoice install
-cd .. && RHVOICE=$HOME/rhvoice python3 audio/make_voice.py
+curl -LO https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-ru_RU-ruslan-medium.tar.bz2
+tar xjf vits-piper-ru_RU-ruslan-medium.tar.bz2
+pip install piper-tts onnxruntime numpy scipy
+PIPER_VOICE=vits-piper-ru_RU-ruslan-medium/ru_RU-ruslan-medium.onnx python3 audio/make_voice.py
 ```
-Хотите свой голос — запишите его поверх `UzbekistanClean` или замените `public/voiceover.wav`
-и пересоберите микс (вызов `make_voice.py` берёт музыку из `public/soundtrack.wav`).
+Хотите свой голос — запишите его поверх `UzbekistanClean` или замените `public/voiceover.wav`.
 
 ## Как собрать
 ```bash
 npm install
 npm run audio                     # пересобрать музыку (python3 + numpy + scipy)
-RHVOICE=$HOME/rhvoice python3 audio/make_voice.py   # озвучка + микс + тайминг субтитров
+PIPER_VOICE=…/ru_RU-ruslan-medium.onnx python3 audio/make_voice.py   # озвучка + микс + субтитры
 npm run render                    # -> out/uzbekistan.mp4 (озвучка + субтитры)
 npx remotion render src/index.ts UzbekistanClean out/uzbekistan-clean.mp4   # только музыка
 npm run studio                    # превью в Remotion Studio

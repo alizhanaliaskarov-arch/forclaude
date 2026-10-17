@@ -141,7 +141,7 @@ export const S16Final: React.FC<SceneProps> = ({f}) => {
               opacity: ip(f, [196, 210], [0, 0.85]),
             }}
           >
-            Озвучка: RHVoice «Александр» (диктор Александр Карлов), CC BY-SA 4.0 · Карты: Natural Earth · Музыка: оригинальная
+            Голос: Ruslan (корпус RUSLAN, CC BY-NC-SA 4.0) · Карты: Natural Earth · Музыка: оригинальная
           </div>
         </>
       ) : null}
