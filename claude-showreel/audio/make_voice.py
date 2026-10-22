@@ -96,7 +96,7 @@ LINES = [
     ('s16', 9.6, 'Одно слово — и всё возможно.', None),
 ]
 GAP = 0.18  # pause between consecutive lines
-BASE_RATE = 108  # a touch brisker than RHVoice default (100)
+BASE_RATE = 112  # same pace as the Uzbekistan video
 MAX_RATE = 128
 
 
@@ -192,7 +192,7 @@ k = int(0.25 * SR)
 active = np.convolve(active, np.ones(k) / k, 'same')  # smooth attack/release
 active = np.clip(active * 2.5, 0, 1)
 duck = 1 - 0.65 * active
-mix = music * duck * 0.9 + np.stack([voice, voice]) * 0.95
+mix = music * duck * 0.77 + np.stack([voice, voice]) * 0.95
 peak = np.max(np.abs(mix))
 if peak > 0.98:
     mix *= 0.98 / peak
