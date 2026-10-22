@@ -9,7 +9,7 @@ const ROWS: [string, string][] = [
   ['Сценарий', 'Claude'],
   ['Анимация и монтаж', 'Claude · React + Remotion'],
   ['Музыка и звук', 'Claude · синтез на numpy'],
-  ['Голос', 'RHVoice «Александр» · CC BY-SA 4.0 · А. Карлов'],
+  ['Голос', 'нейросеть Piper, голос «Руслан» · данные CC BY-NC-SA 4.0'],
 ];
 
 export const S17Credits: React.FC<SceneProps> = ({f, dur}) => {

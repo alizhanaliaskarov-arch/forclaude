@@ -36,25 +36,27 @@
   бас, синтезированные бочка/клэп/хэты, рояль в бриджах, сайдчейн, ревербератор на свёртке.
   Все склейки и акценты стоят на сетке тактов, эффекты (вжухи, удары, щелчки клавиш, тиканье, перемотка плёнки)
   — точно на кадрах переходов. Файл: `public/soundtrack.wav`.
-- **Голос** — [`audio/make_voice.py`](audio/make_voice.py): RHVoice «Александр» (aleksandr-hq, диктор Александр Карлов,
-  лицензия CC BY-SA 4.0 — указано в титрах). Музыка автоматически приглушается под голосом,
-  субтитры строятся по реальному таймингу реплик (`src/voice-timing.json`).
+- **Голос** — [`audio/make_voice.py`](audio/make_voice.py): та же цепочка, что в ролике про Узбекистан —
+  нейросетевой голос Piper/VITS `ru_RU-ruslan-medium` (данные голоса — CC BY-NC-SA 4.0, указано в титрах),
+  ручные ударения там, где espeak ошибается, естественный темп диктора, студийная обработка
+  (EQ, де-эссер, компрессор, «воздух», маленькая комната, вдохи перед фразами, тон комнаты).
+  Музыка автоматически приглушается под голосом, субтитры идут по реальному таймингу реплик.
 
 ## Как собрать
 ```bash
 npm install
 python3 audio/make_audio.py                          # музыка (numpy + scipy)
-RHVOICE=$HOME/rhvoice python3 audio/make_voice.py    # озвучка + микс + тайминг субтитров
+PIPER_VOICE=vits-piper-ru_RU-ruslan-medium/ru_RU-ruslan-medium.onnx python3 audio/make_voice.py   # озвучка + микс + субтитры
 node scripts/stats.mjs                               # счётчик строк кода для сцены «Секрет» и титров
 npm run render                                       # -> out/claude-showreel.mp4
 npx remotion render src/index.ts ShowreelClean out/claude-showreel-clean.mp4   # без голоса и субтитров
 node scripts/stills.mjs out/stills 300 1500 6000     # стоп-кадры для проверки
 ```
-Сборка RHVoice (один раз):
+Голос (один раз):
 ```bash
-git clone --depth 1 --branch 1.14.0 --recurse-submodules --shallow-submodules https://github.com/RHVoice/RHVoice.git
-cd RHVoice && pip install scons
-scons audio_libs=none prefix=$HOME/rhvoice && scons audio_libs=none prefix=$HOME/rhvoice install
+curl -LO https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models/vits-piper-ru_RU-ruslan-medium.tar.bz2
+tar xjf vits-piper-ru_RU-ruslan-medium.tar.bz2
+pip install piper-tts onnxruntime scipy numpy
 ```
 `remotion.config.ts` указывает на Chromium из `/opt/pw-browsers`; на своей машине эту строку можно удалить.
 
