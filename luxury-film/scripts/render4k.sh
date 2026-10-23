@@ -3,12 +3,12 @@
 cd "$(dirname "$0")/.."
 mkdir -p out/4k
 LOG=out/4k/progress.log
-: > $LOG
+echo "RESTART $(date)" >> $LOG
 for i in 0 1 2 3; do
   a=$((i*450)); b=$((a+449))
   if [ ! -s out/4k/part$i.mp4 ]; then
     echo "CHUNK $i $a-$b" >> $LOG
-    npx remotion render src/index.ts Luxury out/4k/part$i.mp4 --frames=$a-$b --scale=2 --muted \
+    npx remotion render src/index.ts Luxury out/4k/part$i.mp4 --frames=$a-$b --scale=2 --muted --timeout=240000 \
       --codec=h264 --crf=16 --pixel-format=yuv420p --concurrency=4 >> $LOG 2>&1 || { echo "FAILED chunk $i" >> $LOG; exit 1; }
   fi
 done
