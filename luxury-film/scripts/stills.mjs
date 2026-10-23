@@ -13,7 +13,7 @@ const browser = await openBrowser('chrome', {
 const comp = await selectComposition({serveUrl, id, puppeteerInstance: browser});
 for (const f of fr) {
   const t0 = Date.now();
-  await renderStill({composition: comp, serveUrl, frame: +f, puppeteerInstance: browser, scale: 0.5, output: path.join(out, `f${String(f).padStart(4, '0')}.png`)});
+  await renderStill({composition: comp, serveUrl, frame: +f, puppeteerInstance: browser, scale: Number(process.env.SCALE || 0.5), output: path.join(out, `f${String(f).padStart(4, '0')}.png`)});
   console.log('frame', f, Date.now() - t0, 'ms');
 }
 await browser.close({silent: true});
