@@ -160,7 +160,7 @@ export const World: React.FC<{t: number}> = ({t}) => {
   // overhead / rim spot
   const camA = Math.atan2(shot.p[0], shot.p[2]);
   const rimPos: V3 = s3 ? [-Math.sin(camA) * 3, 3.4, -Math.cos(camA) * 3] : [0.4, 6, -2.4];
-  const rimI = s1 ? ip(t, [0.5, 3], [0, 30]) : s4 ? 0 : s7 ? ip(t, [50.8, 51.8], [32, 0]) : s6 ? ip(t, [41.2, 42.3], [28, 0]) : 28;
+  const rimI = s1 ? ip(t, [0.5, 3], [0, 30]) : s4 ? 0 : s7 ? ip(t, [50.8, 51.8], [32, 0]) : s6 ? ip(t, [41.2, 42.3], [20, 0]) : s8 ? 0 : s3 ? 14 : 18;
 
   const heroVisible = !s4;
   const floorOn = s3 || s5 || s7 || s8;

@@ -35,54 +35,151 @@ const Emblem: React.FC<{size: number; draw?: number; opacity?: number}> = ({size
 
 /* ───────────── transitions (2D) ───────────── */
 
-/** 01 → 02: the silver line widens until light fills the frame, then the frame clears onto the next shot. */
-const LightWipe: React.FC<{t: number}> = ({t}) => {
-  if (t < 4.0 || t > 5.7) return null;
-  const grow = ip(t, [4.0, 5.0], [0, 1], easeIn);
-  const clear = ip(t, [5.0, 5.7], [1, 0], easeOut);
-  const h = 2 + grow * H;
-  return (
-    <AbsoluteFill style={{alignItems: 'center', justifyContent: 'center', opacity: clear}}>
-      <div style={{width: W, height: h, background: `linear-gradient(180deg, rgba(220,224,230,0) 0%, rgba(236,238,241,${0.4 + grow * 0.6}) 35%, #F4F5F7 50%, rgba(236,238,241,${0.4 + grow * 0.6}) 65%, rgba(220,224,230,0) 100%)`, boxShadow: `0 0 ${40 + grow * 200}px rgba(240,242,245,0.8)`}} />
-    </AbsoluteFill>
-  );
+const bell = (t: number, at: number, half: number) => Math.max(0, 1 - Math.abs(t - at) / half);
+
+/**
+ * Camera-side effects applied to the rendered 3D frame: exposure blooms, zoom-blur rushes,
+ * focus pulls and the small "punch" on every beat cut. All transitions below lean on it.
+ */
+const canvasFx = (t: number): {transform: string; filter: string} => {
+  let scale = 1;
+  let tx = 0;
+  let blur = 0;
+  let bright = 1;
+  // 01: the macro opens soft and pulls into focus
+  blur += ip(t, [0.4, 2.6], [7, 0], smooth);
+  // 01 → 02: light overexposes the frame, the new shot settles out of the glow
+  bright += ip(t, [4.3, 5.0], [0, 1.6], easeIn) * (t < 5 ? 1 : 0) + (t >= 5 ? ip(t, [5.0, 5.9], [1.6, 0], easeOut) : 0);
+  blur += t >= 5 ? ip(t, [5.0, 5.7], [8, 0], easeOut) : 0;
+  // 02 → 03 match cut: an exposure kiss on the shared highlight + a gentle settle
+  bright += 0.9 * bell(t, 10, 0.2);
+  scale += t >= 10 ? ip(t, [10, 10.6], [0.045, 0], easeOut) : 0;
+  // 03 → 04: motion-blur as the pillar sweeps, the new shot slides in behind it
+  blur += 5 * bell(t, 17, 0.25);
+  tx += t >= 17 ? ip(t, [17, 17.45], [-60, 0], easeOut) : 0;
+  // 04: a punch on every beat cut
+  for (let k = 1; k <= 6; k++) {
+    const c = 17 + k * 1.25;
+    if (t >= c && t < c + 0.3) {
+      scale += ip(t, [c, c + 0.3], [0.03, 0], easeOut);
+      bright += ip(t, [c, c + 0.2], [0.35, 0], easeOut);
+    }
+  }
+  // 04 → 05: rush into the spinning disc, then the peak resolves out of a zoom blur
+  if (t >= 24.6 && t < 25) {
+    scale += ip(t, [24.6, 25], [0, 0.22], easeIn);
+    blur += ip(t, [24.6, 25], [0, 14], easeIn);
+    bright += ip(t, [24.75, 25], [0, 0.8], easeIn);
+  }
+  if (t >= 25 && t < 26) {
+    scale += ip(t, [25, 25.9], [0.2, 0], easeOut);
+    blur += ip(t, [25, 25.6], [12, 0], easeOut);
+    bright += ip(t, [25, 25.6], [0.8, 0], easeOut);
+  }
+  // 05 → 06: the highlight blows out, hard cut at the peak, the macro comes back from white
+  bright += t < 35 ? ip(t, [34.7, 35], [0, 2.6], easeIn) : ip(t, [35, 35.45], [2.6, 0], easeOut);
+  // 06: focus pulls on the macro, then a rack to the frontal frame
+  blur += t >= 35 ? ip(t, [35, 36.3], [9, 0], smooth) : 0;
+  blur += t >= 38.6 ? ip(t, [38.6, 39.4], [6, 0], smooth) : 0;
+  // 06 → 07: inside the portal the new world eases back
+  scale += t >= 43 ? ip(t, [43, 44.2], [0.14, 0], easeOut) : 0;
+  return {
+    transform: `translateX(${tx}px) scale(${scale})`,
+    filter: `${blur > 0.05 ? `blur(${blur}px) ` : ''}brightness(${bright})`,
+  };
 };
 
-/** 02 → 03 match cut: the same vertical highlight bridges both shots. */
-const Streak: React.FC<{t: number; at: number; x?: number}> = ({t, at, x = W / 2}) => {
-  const d = Math.abs(t - at);
-  if (d > 0.22) return null;
-  const o = 1 - d / 0.22;
+/** 01 → 02: two plates of light close over the frame like a shutter of silver, then part to reveal the next shot. */
+const LightSlit: React.FC<{t: number}> = ({t}) => {
+  if (t < 4.1 || t > 5.75) return null;
+  const close = ip(t, [4.1, 5.0], [0, 1], easeIn);
+  const open = ip(t, [5.0, 5.75], [0, 1], easeOut);
+  const gap = t < 5 ? (1 - close) * (H / 2) : open * (H / 2 + 120);
+  const glow = t < 5 ? close : 1 - open;
+  const plate = (top: boolean): React.CSSProperties => ({
+    position: 'absolute',
+    left: 0,
+    width: W,
+    height: H / 2 + 60,
+    [top ? 'bottom' : 'top']: H / 2 + gap,
+    background: top
+      ? 'linear-gradient(0deg, #f6f7f9 0%, #d9dce0 6%, rgba(160,164,170,0.55) 40%, rgba(40,42,46,0) 100%)'
+      : 'linear-gradient(180deg, #f6f7f9 0%, #d9dce0 6%, rgba(160,164,170,0.55) 40%, rgba(40,42,46,0) 100%)',
+    opacity: 0.25 + 0.75 * glow,
+    filter: 'blur(10px)',
+  });
   return (
     <AbsoluteFill style={{pointerEvents: 'none', mixBlendMode: 'screen'}}>
-      <div style={{position: 'absolute', left: x - 2, top: 0, width: 4, height: H, background: 'linear-gradient(180deg, transparent, #fff 30%, #fff 70%, transparent)', opacity: o, boxShadow: `0 0 ${60 * o}px 10px rgba(255,255,255,${0.5 * o})`}} />
+      <div style={plate(true)} />
+      <div style={plate(false)} />
+      {/* anamorphic core of the slit */}
+      <div style={{position: 'absolute', left: -200, width: W + 400, top: H / 2 - gap - 3, height: 6, background: '#fff', opacity: glow, boxShadow: `0 0 ${30 + 90 * glow}px 14px rgba(255,255,255,${0.55 * glow})`}} />
+      <div style={{position: 'absolute', left: -200, width: W + 400, top: H / 2 + gap - 3, height: 6, background: '#fff', opacity: glow, boxShadow: `0 0 ${30 + 90 * glow}px 14px rgba(255,255,255,${0.55 * glow})`}} />
     </AbsoluteFill>
   );
 };
 
-/** 03 → 04: the pillar that covered the lens keeps travelling and uncovers the new shot. */
+/** Anamorphic streak + soft bloom from a point (restrained — one streak, no ghost rings). */
+const Anamorphic: React.FC<{t: number; at: number; half: number; x: number; y: number; vertical?: boolean; strength?: number}> = ({
+  t,
+  at,
+  half,
+  x,
+  y,
+  vertical,
+  strength = 1,
+}) => {
+  const o = Math.pow(bell(t, at, half), 1.4) * strength;
+  if (o <= 0) return null;
+  return (
+    <AbsoluteFill style={{pointerEvents: 'none', mixBlendMode: 'screen'}}>
+      <div
+        style={{
+          position: 'absolute',
+          left: vertical ? x - 3 : -100,
+          top: vertical ? -100 : y - 3,
+          width: vertical ? 6 : W + 200,
+          height: vertical ? H + 200 : 6,
+          background: vertical ? 'linear-gradient(180deg, transparent, #fff 35%, #fff 65%, transparent)' : 'linear-gradient(90deg, transparent, #fff 35%, #fff 65%, transparent)',
+          opacity: o,
+          filter: 'blur(1.5px)',
+          boxShadow: `0 0 ${50 * o}px 12px rgba(235,240,248,${0.5 * o})`,
+        }}
+      />
+      <div style={{position: 'absolute', left: x - 420, top: y - 420, width: 840, height: 840, borderRadius: '50%', background: 'radial-gradient(circle, rgba(255,255,255,0.95) 0%, rgba(225,230,238,0.35) 25%, rgba(0,0,0,0) 62%)', opacity: o}} />
+    </AbsoluteFill>
+  );
+};
+
+/** 03 → 04: the occluding pillar keeps travelling — motion-blurred dark chrome with a moving edge highlight. */
 const PillarExit: React.FC<{t: number}> = ({t}) => {
   if (t < 17 || t > 17.45) return null;
-  const x = ip(t, [17, 17.45], [0, W * 1.05], easeIn);
+  const x = ip(t, [17, 17.45], [0, W * 1.08], easeIn);
+  const speed = ip(t, [17, 17.45], [0.3, 1]);
   return (
     <AbsoluteFill style={{pointerEvents: 'none'}}>
-      <div style={{position: 'absolute', left: x, top: 0, width: W, height: H, background: 'linear-gradient(90deg, #26282c 0%, #0a0a0b 6%, #050506 100%)'}} />
+      <div style={{position: 'absolute', left: x, top: -40, width: W + 80, height: H + 80, background: 'linear-gradient(90deg, #3a3d42 0%, #121214 4%, #060607 30%, #050506 100%)', filter: `blur(${4 + speed * 22}px)`}} />
+      <div style={{position: 'absolute', left: x - 6, top: 0, width: 10, height: H, background: 'linear-gradient(180deg, transparent, #e9ecf0 40%, #e9ecf0 60%, transparent)', filter: `blur(${2 + speed * 10}px)`, opacity: 0.8}} />
     </AbsoluteFill>
   );
 };
 
-/** 04 → 05: the spinning titanium disc fills the frame, then dissolves into the peak. */
-const DiscOut: React.FC<{t: number}> = ({t}) => {
-  if (t < 25 || t > 25.5) return null;
-  return <AbsoluteFill style={{background: 'linear-gradient(160deg, #7d8086, #b7bac0 45%, #6b6e74)', opacity: ip(t, [25, 25.5], [1, 0], easeOut)}} />;
-};
-
-/** 05 → 06: a flash of reflected light motivates the hard cut. */
-const Flash: React.FC<{t: number; at: number}> = ({t, at}) => {
-  if (t < at - 0.2 || t > at + 0.2) return null;
-  const o = t < at ? ip(t, [at - 0.2, at], [0, 1], easeIn) : ip(t, [at, at + 0.2], [1, 0], easeOut);
+/** Glowing hairline at the edge of the opening portal. */
+const PortalRing: React.FC<{r: number | null; t: number}> = ({r, t}) => {
+  if (r === null) return null;
+  const o = ip(t, [43, 43.15, 43.6, 43.9], [0, 1, 0.7, 0]);
   return (
-    <AbsoluteFill style={{pointerEvents: 'none', background: `radial-gradient(circle at 56% 34%, rgba(255,255,255,${o}) 0%, rgba(235,238,242,${o * 0.85}) 30%, rgba(200,204,210,${o * 0.5}) 70%)`}} />
+    <AbsoluteFill style={{pointerEvents: 'none'}}>
+      <svg width={W} height={H} style={{position: 'absolute', overflow: 'visible'}}>
+        <defs>
+          <filter id="pg" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation={8} />
+          </filter>
+        </defs>
+        <circle cx={W / 2} cy={H / 2} r={r} fill="none" stroke="#ffffff" strokeWidth={10} opacity={o * 0.5} filter="url(#pg)" />
+        <circle cx={W / 2} cy={H / 2} r={r} fill="none" stroke={C.platinum} strokeWidth={1.6} opacity={o} />
+      </svg>
+    </AbsoluteFill>
   );
 };
 
@@ -106,6 +203,7 @@ export const Film: React.FC = () => {
     <AbsoluteFill style={{background: C.black}}>
       <Fonts />
       <AbsoluteFill style={{clipPath: portal !== null ? `circle(${portal}px at 50% 50%)` : undefined, opacity: endFade}}>
+        <AbsoluteFill style={canvasFx(t)}>
         <ThreeCanvas
           width={W}
           height={H}
@@ -113,6 +211,7 @@ export const Film: React.FC = () => {
         >
           <World t={t} />
         </ThreeCanvas>
+        </AbsoluteFill>
       </AbsoluteFill>
 
       {/* typography — all inside the title-safe area */}
@@ -179,11 +278,14 @@ export const Film: React.FC = () => {
         </AbsoluteFill>
       ) : null}
 
-      <LightWipe t={t} />
-      <Streak t={t} at={10} />
+      <LightSlit t={t} />
+      <Anamorphic t={t} at={10} half={0.25} x={W / 2} y={H * 0.36} vertical />
+      <Anamorphic t={t} at={10} half={0.18} x={W / 2} y={H * 0.36} strength={0.5} />
       <PillarExit t={t} />
-      <DiscOut t={t} />
-      <Flash t={t} at={35} />
+      <Anamorphic t={t} at={25} half={0.35} x={W / 2} y={H / 2} strength={0.7} />
+      <Anamorphic t={t} at={35} half={0.3} x={W * 0.56} y={H * 0.34} />
+      <Anamorphic t={t} at={51.6} half={0.5} x={W / 2} y={H * 0.3} strength={0.25} />
+      <PortalRing r={portal} t={t} />
       <Grain frame={frame} />
       <Vignette />
       <Audio src={staticFile('soundtrack.wav')} />
