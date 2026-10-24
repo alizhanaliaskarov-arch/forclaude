@@ -1,15 +1,17 @@
 import React from 'react';
-import {AbsoluteFill, Audio, staticFile, useCurrentFrame} from 'remotion';
+import {AbsoluteFill, Audio, staticFile, useCurrentFrame, useVideoConfig} from 'remotion';
 import {ThreeCanvas} from '@remotion/three';
 import * as THREE from 'three';
 import {World} from './three/World';
 import {Fonts} from './Fonts';
 import {Caption, DepthWord, MaskWord, MetalLine, Statement, WideLine} from './Type';
-import {BRAND, C, F, FPS, H, W, clamp, easeIn, easeOut, ip, linear, smooth} from './theme';
+import {BRAND, C, F, FPS, clamp, easeIn, easeOut, ip, linear, smooth} from './theme';
 
 /* ───────────── finishing ───────────── */
 
-const Grain: React.FC<{frame: number}> = ({frame}) => (
+const Grain: React.FC<{frame: number}> = ({frame}) => {
+  const {width: W, height: H} = useVideoConfig();
+  return (
   <AbsoluteFill style={{pointerEvents: 'none', mixBlendMode: 'overlay', opacity: 0.09}}>
     <svg width={W} height={H}>
       <filter id="g">
@@ -19,7 +21,8 @@ const Grain: React.FC<{frame: number}> = ({frame}) => (
       <rect width={W} height={H} filter="url(#g)" />
     </svg>
   </AbsoluteFill>
-);
+  );
+};
 
 const Vignette = () => (
   <AbsoluteFill style={{pointerEvents: 'none', background: 'radial-gradient(ellipse 80% 70% at 50% 48%, rgba(0,0,0,0) 55%, rgba(0,0,0,0.62) 100%)'}} />
@@ -91,6 +94,7 @@ const canvasFx = (t: number): {transform: string; filter: string} => {
 
 /** 01 → 02: two plates of light close over the frame like a shutter of silver, then part to reveal the next shot. */
 const LightSlit: React.FC<{t: number}> = ({t}) => {
+  const {width: W, height: H} = useVideoConfig();
   if (t < 4.1 || t > 5.75) return null;
   const close = ip(t, [4.1, 5.0], [0, 1], easeIn);
   const open = ip(t, [5.0, 5.75], [0, 1], easeOut);
@@ -129,6 +133,7 @@ const Anamorphic: React.FC<{t: number; at: number; half: number; x: number; y: n
   vertical,
   strength = 1,
 }) => {
+  const {width: W, height: H} = useVideoConfig();
   const o = Math.pow(bell(t, at, half), 1.4) * strength;
   if (o <= 0) return null;
   return (
@@ -153,6 +158,7 @@ const Anamorphic: React.FC<{t: number; at: number; half: number; x: number; y: n
 
 /** 03 → 04: the occluding pillar keeps travelling — motion-blurred dark chrome with a moving edge highlight. */
 const PillarExit: React.FC<{t: number}> = ({t}) => {
+  const {width: W, height: H} = useVideoConfig();
   if (t < 17 || t > 17.45) return null;
   const x = ip(t, [17, 17.45], [0, W * 1.08], easeIn);
   const speed = ip(t, [17, 17.45], [0.3, 1]);
@@ -166,6 +172,7 @@ const PillarExit: React.FC<{t: number}> = ({t}) => {
 
 /** Glowing hairline at the edge of the opening portal. */
 const PortalRing: React.FC<{r: number | null; t: number}> = ({r, t}) => {
+  const {width: W, height: H} = useVideoConfig();
   if (r === null) return null;
   const o = ip(t, [43, 43.15, 43.6, 43.9], [0, 1, 0.7, 0]);
   return (
@@ -185,9 +192,15 @@ const PortalRing: React.FC<{r: number | null; t: number}> = ({r, t}) => {
 
 /* ───────────── film ───────────── */
 
-export const Film: React.FC = () => {
+export const Film: React.FC<{voice?: boolean}> = ({voice = false}) => {
+  const {width: W, height: H} = useVideoConfig();
   const frame = useCurrentFrame();
   const t = frame / FPS;
+  // layout was designed on the 1080×1920 vertical frame; other formats map onto it by height
+  const s = H / 1920;
+  const ts = s * (W > H ? 1.2 : 1); // type a little larger on the wide frame
+  const py = (y: number) => y * s;
+  const px = (x: number) => W / 2 + (x - 540) * s;
 
   // 06 → 07: the emblem opens into a circular portal onto the next environment
   const portal = t >= 43 && t < 43.9 ? ip(t, [43, 43.9], [64, Math.hypot(W, H) / 2 + 20], easeIn) : null;
@@ -195,7 +208,7 @@ export const Film: React.FC = () => {
   const endFade = ip(t, [59.15, 59.95], [1, 0], linear);
 
   // 08: frame line around the subject, then retracts into the emblem above the name
-  const fr = {x0: 300, x1: 780, y0: 270, y1: 1300};
+  const fr = {x0: px(300), x1: px(780), y0: py(270), y1: py(1300)};
   const frameDraw = ip(t, [54.2, 55.9], [0, 1], smooth);
   const frameRetract = ip(t, [56.5, 57.3], [0, 1], smooth);
 
@@ -209,25 +222,25 @@ export const Film: React.FC = () => {
           height={H}
           gl={{antialias: true, toneMapping: THREE.ACESFilmicToneMapping, toneMappingExposure: 1.05, outputColorSpace: THREE.SRGBColorSpace}}
         >
-          <World t={t} />
+          <World t={t} aspect={W / H} />
         </ThreeCanvas>
         </AbsoluteFill>
       </AbsoluteFill>
 
       {/* typography — all inside the title-safe area */}
-      <MaskWord t={t} text="FORM." start={6.0} dissolve={8.4} y={330} size={150} />
-      <WideLine t={t} text="BEYOND ORDINARY" start={12.2} end={16.2} y={300} size={40} />
-      <DepthWord t={t} text="PRECISION" start={20.7} end={24.3} y={1330} size={74} />
-      <MetalLine t={t} lines={['TIMELESS', 'BY DESIGN.']} start={27.6} end={33.9} y={250} size={92} step={0.075} />
-      <Caption t={t} text="SCULPTED IN LIGHT" start={35.7} end={38.3} y={1430} />
-      <Caption t={t} text="OBSIDIAN · TITANIUM · CHROME" start={38.9} end={41.3} y={1560} />
-      <Statement t={t} a="LESS." b="BUT BETTER." start={46.0} end={50.5} y={250} size={84} />
+      <MaskWord t={t} text="FORM." start={6.0} dissolve={8.4} y={py(330)} size={150 * ts} />
+      <WideLine t={t} text="BEYOND ORDINARY" start={12.2} end={16.2} y={py(300)} size={40 * ts} />
+      <DepthWord t={t} text="PRECISION" start={20.7} end={24.3} y={py(1330)} size={74 * ts} />
+      <MetalLine t={t} lines={['TIMELESS', 'BY DESIGN.']} start={27.6} end={33.9} y={py(250)} size={92 * ts} step={0.075} />
+      <Caption t={t} text="SCULPTED IN LIGHT" start={35.7} end={38.3} y={py(1430)} />
+      <Caption t={t} text="OBSIDIAN · TITANIUM · CHROME" start={38.9} end={41.3} y={py(1560)} />
+      <Statement t={t} a="LESS." b="BUT BETTER." start={46.0} end={50.5} y={py(250)} size={84 * ts} />
 
       {/* 06: emblem the silhouette collapses into, then the portal ring */}
       {t > 41.4 && t < 43.9 ? (
         <AbsoluteFill style={{alignItems: 'center', justifyContent: 'center'}}>
           <div style={{transform: `scale(${portal !== null ? portal / 40 : 1})`, opacity: portal !== null ? ip(t, [43.3, 43.9], [1, 0]) : 1}}>
-            <Emblem size={80} draw={ip(t, [41.4, 42.3], [0, 1], smooth)} />
+            <Emblem size={80 * Math.max(ts, 0.75)} draw={ip(t, [41.4, 42.3], [0, 1], smooth)} />
           </div>
         </AbsoluteFill>
       ) : null}
@@ -238,8 +251,8 @@ export const Film: React.FC = () => {
           <svg width={W} height={H} style={{position: 'absolute'}}>
             {frameRetract < 1 ? (
               <rect
-                x={mix2(fr.x0, 540, frameRetract)}
-                y={mix2(fr.y0, 1345, frameRetract)}
+                x={mix2(fr.x0, W / 2, frameRetract)}
+                y={mix2(fr.y0, py(1345), frameRetract)}
                 width={mix2(fr.x1 - fr.x0, 0, frameRetract)}
                 height={mix2(fr.y1 - fr.y0, 0, frameRetract)}
                 fill="none"
@@ -252,8 +265,8 @@ export const Film: React.FC = () => {
             ) : null}
           </svg>
           {t > 57.1 ? (
-            <div style={{position: 'absolute', left: 0, right: 0, top: 1345 - 22, display: 'flex', justifyContent: 'center'}}>
-              <Emblem size={44} draw={ip(t, [57.1, 57.8], [0, 1], smooth)} />
+            <div style={{position: 'absolute', left: 0, right: 0, top: py(1345) - 22 * ts, display: 'flex', justifyContent: 'center'}}>
+              <Emblem size={44 * ts} draw={ip(t, [57.1, 57.8], [0, 1], smooth)} />
             </div>
           ) : null}
           <div
@@ -261,12 +274,12 @@ export const Film: React.FC = () => {
               position: 'absolute',
               left: 0,
               right: 0,
-              top: 1398,
+              top: py(1398),
               display: 'flex',
               justifyContent: 'center',
               fontFamily: F.serif,
               fontWeight: 300,
-              fontSize: 70,
+              fontSize: 70 * ts,
               letterSpacing: `${ip(t, [57.3, 59], [0.62, 0.52], easeOut)}em`,
               marginRight: '-0.5em',
               color: C.platinum,
@@ -288,7 +301,7 @@ export const Film: React.FC = () => {
       <PortalRing r={portal} t={t} />
       <Grain frame={frame} />
       <Vignette />
-      <Audio src={staticFile('soundtrack.wav')} />
+      <Audio src={staticFile(voice ? 'soundtrack_vo.wav' : 'soundtrack.wav')} />
       {/* keep the very last frames clean black */}
       {clamp(1 - endFade) > 0 ? <AbsoluteFill style={{background: '#000', opacity: clamp(1 - endFade), pointerEvents: 'none'}} /> : null}
     </AbsoluteFill>

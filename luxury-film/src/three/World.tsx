@@ -129,7 +129,7 @@ const CONTOUR: V3[] = [
   [-0.12, 1.65, ZF], [-0.13, 1.56, ZF], [-0.31, 1.55, ZF], [-0.31, 1.5, ZF], [-0.39, 1.5, ZF], [-0.39, 0.02, ZF], [0, 0.02, ZF],
 ];
 
-export const World: React.FC<{t: number}> = ({t}) => {
+export const World: React.FC<{t: number; aspect?: number}> = ({t, aspect = 9 / 16}) => {
   const shot = cameraAt(t);
   const s1 = t < 5;
   const s2 = t >= 5 && t < 10;
@@ -173,7 +173,7 @@ export const World: React.FC<{t: number}> = ({t}) => {
       <CameraRig shot={shot} />
       <fogExp2 attach="fog" args={['#060607', s4 ? 0.07 : 0.045]} />
       <spotLight position={rimPos} angle={0.32} penumbra={0.9} intensity={rimI} distance={0} decay={1.2} color="#ffffff" />
-      <directionalLight position={[2, 3, 4]} intensity={s4 ? 0.6 : 0.15} color="#e9ecf1" />
+      <directionalLight position={[2, 3, 4]} intensity={s4 ? 0.6 : s8 ? 0 : 0.15} color="#e9ecf1" />
 
       <Mirror enabled={floorOn}>
         {heroVisible ? <Hero /> : null}
@@ -181,7 +181,7 @@ export const World: React.FC<{t: number}> = ({t}) => {
         {s5 ? <Monoliths t={t} align={ip(t, [25.2, 29.2], [0, 1], smooth)} /> : null}
         {s7 ? <Arcs t={t} align={ip(t, [43, 48.2], [0, 1], smooth)} dim={ip(t, [50.6, 51.8], [1, 0])} /> : null}
       </Mirror>
-      {floorOn ? <Floor env={s8 ? 0.05 : 0.22} /> : null}
+      {floorOn ? <Floor env={s8 ? 0 : 0.22} coat={s8 ? 0.12 : 1} /> : null}
 
       {/* 01: the line that forms, bends and catches the light */}
       {s1 ? (
@@ -206,9 +206,9 @@ export const World: React.FC<{t: number}> = ({t}) => {
       {s3 && t > 16.4 ? (() => {
         const fwd = new THREE.Vector3(...shot.l).sub(new THREE.Vector3(...shot.p)).normalize();
         const right = new THREE.Vector3().crossVectors(fwd, new THREE.Vector3(0, 1, 0)).normalize();
-        const off = ip(t, [16.4, 17], [-1.3, 0], linear);
+        const off = ip(t, [16.4, 17], [-1.3 * Math.max(1, aspect * 1.1), 0], linear);
         const p = new THREE.Vector3(...shot.p).addScaledVector(fwd, 0.9).addScaledVector(right, off);
-        return <Pillar x={p.x} z={p.z} />;
+        return <Pillar x={p.x} z={p.z} width={Math.max(0.9, 1.15 * aspect * 1.25)} />;
       })() : null}
 
       {/* 04: chrome forms in a black void */}

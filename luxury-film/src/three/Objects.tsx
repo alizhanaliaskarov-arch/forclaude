@@ -162,8 +162,8 @@ export const Disc: React.FC<{t: number; z: number}> = ({t, z}) => {
 };
 
 /** Dark pillar passing in front of the lens (occlusion cut, scene 3 → 4). */
-export const Pillar: React.FC<{x: number; z: number}> = ({x, z}) => {
-  const {geo, m} = useMemo(() => ({geo: new RoundedBoxGeometry(0.9, 8, 0.9, 4, 0.08), m: blackChrome()}), []);
+export const Pillar: React.FC<{x: number; z: number; width?: number}> = ({x, z, width = 0.9}) => {
+  const {geo, m} = useMemo(() => ({geo: new RoundedBoxGeometry(width, 8, 0.9, 4, 0.08), m: blackChrome()}), [width]);
   return <mesh geometry={geo} material={m} position={[x, 1.5, z]} />;
 };
 
@@ -272,7 +272,7 @@ export const Beam: React.FC<{opacity: number; pos?: V3; radius?: number; height?
 };
 
 /** Black glossy floor. Reflections are real geometry mirrored under it (see Mirror). */
-export const Floor: React.FC<{opacity?: number; env?: number}> = ({opacity = 0.74, env = 0.22}) => {
+export const Floor: React.FC<{opacity?: number; env?: number; coat?: number}> = ({opacity = 0.74, env = 0.22, coat = 1}) => {
   const mat = useMemo(
     () =>
       new THREE.MeshPhysicalMaterial({
@@ -288,6 +288,7 @@ export const Floor: React.FC<{opacity?: number; env?: number}> = ({opacity = 0.7
   );
   mat.opacity = opacity;
   mat.envMapIntensity = env;
+  mat.clearcoat = coat;
   return (
     <mesh rotation={[-Math.PI / 2, 0, 0]} material={mat} renderOrder={2}>
       <circleGeometry args={[30, 96]} />
