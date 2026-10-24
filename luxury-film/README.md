@@ -1,6 +1,16 @@
-# OBSIDIAN — luxury cinematic film (Remotion + Three.js, 1080×1920, 0:60, 30 fps)
+# OBSIDIAN — luxury cinematic film (Remotion + Three.js, 0:60, 30 fps)
 
-**Result:** [`out/luxury-film.mp4`](out/luxury-film.mp4) — vertical 9:16, H.264 + AAC 48 kHz, dialogue-free.
+| File | Format | Sound |
+|---|---|---|
+| [`out/luxury-film-4k-vo.mp4`](out/luxury-film-4k-vo.mp4) | vertical 9:16, 2160×3840 (Reels / TikTok / Shorts) | score + Russian voice-over |
+| [`out/luxury-film-vo.mp4`](out/luxury-film-vo.mp4) | vertical 9:16, 1080×1920 | score + voice-over |
+| [`out/luxury-film-wide-4k.mp4`](out/luxury-film-wide-4k.mp4) | horizontal 16:9, 3840×2160 (YouTube) | score + voice-over |
+| [`out/luxury-film-4k.mp4`](out/luxury-film-4k.mp4), [`out/luxury-film.mp4`](out/luxury-film.mp4) | vertical, 4K / 1080p | score only |
+
+Voice-over: [`audio/make_voice.py`](audio/make_voice.py) — neural Piper voice «ruslan» (voice data CC BY-NC-SA 4.0, non-commercial),
+15 sparse lines placed on the typography; the score is ducked under the voice (`public/soundtrack_vo.wav`).
+The 16:9 composition `LuxuryWide` reuses the same scenes: the type and frame lines map from the vertical layout by height,
+the camera keeps its vertical field of view, so the wide frame simply shows more of the set.
 
 A 60-second dark-luxury spot built entirely in code: real-time 3D (Three.js, physically based materials —
 polished chrome, black chrome, anisotropic brushed titanium, clear-coated obsidian) rendered frame by frame in Remotion,
@@ -37,7 +47,10 @@ and a long metallic tail. Every transition has its own cue (clicks, metallic swe
 ```bash
 npm install
 python3 audio/make_audio.py        # numpy + scipy → public/soundtrack.wav
-npm run render                     # → out/luxury-film.mp4 (software WebGL: ~1 h on 4 CPU cores)
+PIPER_VOICE=…/ru_RU-ruslan-medium.onnx python3 audio/make_voice.py   # voice-over + mix
+scripts/render4k.sh Luxury     luxury-film-4k-vo   soundtrack_vo.wav   # vertical 4K (~3.5 h on 4 CPU cores)
+scripts/render4k.sh LuxuryWide luxury-film-wide-4k soundtrack_vo.wav   # 16:9 4K
+npm run render                     # quick 1080×1920 (software WebGL: ~1 h)
 node scripts/stills.mjs Luxury out/stills 150 900 1700   # check frames
 ```
 On a machine with a GPU, set `Config.setChromiumOpenGlRenderer('angle')` in `remotion.config.ts` — much faster.
