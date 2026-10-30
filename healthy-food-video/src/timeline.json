@@ -1,0 +1,347 @@
+{
+ "scenes": [
+  {
+   "id": "intro",
+   "start": 0.0,
+   "end": 26.717
+  },
+  {
+   "id": "produce",
+   "start": 26.717,
+   "end": 69.359
+  },
+  {
+   "id": "plate",
+   "start": 69.359,
+   "end": 114.824
+  },
+  {
+   "id": "meals",
+   "start": 114.824,
+   "end": 156.375
+  },
+  {
+   "id": "water",
+   "start": 156.375,
+   "end": 191.387
+  },
+  {
+   "id": "together",
+   "start": 191.387,
+   "end": 232.96
+  },
+  {
+   "id": "habits",
+   "start": 232.96,
+   "end": 275.741
+  },
+  {
+   "id": "outro",
+   "start": 275.741,
+   "end": 300.644
+  }
+ ],
+ "lines": [
+  {
+   "scene": "intro",
+   "start": 3.6,
+   "end": 4.972,
+   "text": "Hi there, and welcome!"
+  },
+  {
+   "scene": "intro",
+   "start": 6.259,
+   "end": 11.696,
+   "text": "Today, let's talk about healthy food, and how it can help you live a healthier, happier life."
+  },
+  {
+   "scene": "intro",
+   "start": 12.983,
+   "end": 16.63,
+   "text": "The best part? Eating well can be simple, tasty, and fun."
+  },
+  {
+   "scene": "intro",
+   "start": 17.917,
+   "end": 24.517,
+   "text": "In the next few minutes, we'll look at fresh food, balanced meals, water, and small habits you can start today."
+  },
+  {
+   "scene": "produce",
+   "start": 28.717,
+   "end": 31.155,
+   "text": "Let's start with fresh fruits and vegetables."
+  },
+  {
+   "scene": "produce",
+   "start": 32.442,
+   "end": 37.939,
+   "text": "Red tomatoes, green broccoli, orange carrots, purple grapes, and bright yellow lemons."
+  },
+  {
+   "scene": "produce",
+   "start": 39.226,
+   "end": 44.242,
+   "text": "Every color gives your body something different: vitamins, minerals, and fiber."
+  },
+  {
+   "scene": "produce",
+   "start": 45.529,
+   "end": 50.221,
+   "text": "Fresh, frozen, or canned without added sugar or salt, they all count."
+  },
+  {
+   "scene": "produce",
+   "start": 51.508,
+   "end": 56.093,
+   "text": "Try adding one new fruit or vegetable to your shopping basket each week."
+  },
+  {
+   "scene": "produce",
+   "start": 57.38,
+   "end": 60.745,
+   "text": "So try to eat a rainbow. The more variety, the better."
+  },
+  {
+   "scene": "produce",
+   "start": 62.032,
+   "end": 67.159,
+   "text": "Healthy eating isn't about one perfect food. It's about variety and balance."
+  },
+  {
+   "scene": "plate",
+   "start": 71.359,
+   "end": 73.318,
+   "text": "Now, let's build a balanced plate."
+  },
+  {
+   "scene": "plate",
+   "start": 74.605,
+   "end": 77.571,
+   "text": "Fill about half of your plate with vegetables and fruit."
+  },
+  {
+   "scene": "plate",
+   "start": 78.858,
+   "end": 84.085,
+   "text": "Add about a quarter of protein, like fish, chicken, eggs, beans, or lentils."
+  },
+  {
+   "scene": "plate",
+   "start": 85.372,
+   "end": 89.566,
+   "text": "Protein helps your body build and repair, and it keeps you feeling full."
+  },
+  {
+   "scene": "plate",
+   "start": 90.853,
+   "end": 96.889,
+   "text": "Then a quarter of grains, especially whole grains, like brown rice, oats, or whole-wheat bread."
+  },
+  {
+   "scene": "plate",
+   "start": 98.176,
+   "end": 101.602,
+   "text": "Whole grains give you steady energy and plenty of fiber."
+  },
+  {
+   "scene": "plate",
+   "start": 102.889,
+   "end": 107.427,
+   "text": "Finish with a little healthy fat, like olive oil, nuts, or avocado."
+  },
+  {
+   "scene": "plate",
+   "start": 108.714,
+   "end": 112.624,
+   "text": "No measuring needed. Just use this simple picture as your guide."
+  },
+  {
+   "scene": "meals",
+   "start": 116.824,
+   "end": 119.172,
+   "text": "So, what does this look like during the day?"
+  },
+  {
+   "scene": "meals",
+   "start": 120.781,
+   "end": 126.44,
+   "text": "For breakfast, try oatmeal with berries and banana, or yogurt with fruit and a few nuts."
+  },
+  {
+   "scene": "meals",
+   "start": 127.727,
+   "end": 133.677,
+   "text": "For lunch, enjoy a colorful salad, or a whole-grain wrap with vegetables and some protein."
+  },
+  {
+   "scene": "meals",
+   "start": 134.964,
+   "end": 140.754,
+   "text": "And for dinner, keep it warm and simple, like baked salmon with rice and steamed broccoli."
+  },
+  {
+   "scene": "meals",
+   "start": 142.041,
+   "end": 145.824,
+   "text": "Planning a few meals ahead can make busy days so much easier."
+  },
+  {
+   "scene": "meals",
+   "start": 147.111,
+   "end": 154.175,
+   "text": "Use the foods you love, and the foods from your own culture. The balanced plate works with almost any cuisine."
+  },
+  {
+   "scene": "water",
+   "start": 158.375,
+   "end": 160.06,
+   "text": "And don't forget to drink water."
+  },
+  {
+   "scene": "water",
+   "start": 161.347,
+   "end": 166.17,
+   "text": "Water helps your body work well, and it can help you feel more awake and focused."
+  },
+  {
+   "scene": "water",
+   "start": 167.457,
+   "end": 171.912,
+   "text": "Start your morning with a glass of water, and keep a bottle close during the day."
+  },
+  {
+   "scene": "water",
+   "start": 173.199,
+   "end": 178.714,
+   "text": "If plain water feels boring, add a slice of lemon, a few mint leaves, or some cucumber."
+  },
+  {
+   "scene": "water",
+   "start": 180.001,
+   "end": 184.698,
+   "text": "Herbal tea, and water-rich foods like cucumber and watermelon, can help too."
+  },
+  {
+   "scene": "water",
+   "start": 185.985,
+   "end": 189.187,
+   "text": "And when you can, choose water instead of sugary drinks."
+  },
+  {
+   "scene": "together",
+   "start": 193.387,
+   "end": 195.097,
+   "text": "Food is also about people."
+  },
+  {
+   "scene": "together",
+   "start": 196.384,
+   "end": 200.629,
+   "text": "Sharing a meal with friends or family is one of life's simple joys."
+  },
+  {
+   "scene": "together",
+   "start": 201.916,
+   "end": 206.964,
+   "text": "Eating together helps us slow down, talk, laugh, and really enjoy our food."
+  },
+  {
+   "scene": "together",
+   "start": 208.251,
+   "end": 212.954,
+   "text": "Try turning off the screens, and focus on the meal and the people around you."
+  },
+  {
+   "scene": "together",
+   "start": 214.241,
+   "end": 217.134,
+   "text": "And yes, you can still enjoy your favorite treats."
+  },
+  {
+   "scene": "together",
+   "start": 218.421,
+   "end": 223.32,
+   "text": "A slice of cake, some chocolate, or an ice cream can be part of a balanced diet."
+  },
+  {
+   "scene": "together",
+   "start": 224.607,
+   "end": 230.76,
+   "text": "The key is balance, not perfection. Enjoy a smaller portion, savor it, and don't feel guilty."
+  },
+  {
+   "scene": "habits",
+   "start": 234.96,
+   "end": 237.874,
+   "text": "Big changes can feel hard, so start small."
+  },
+  {
+   "scene": "habits",
+   "start": 239.161,
+   "end": 243.165,
+   "text": "Cook at home one more time each week. It's easier than you think."
+  },
+  {
+   "scene": "habits",
+   "start": 244.453,
+   "end": 246.761,
+   "text": "Add one extra vegetable to your meals."
+  },
+  {
+   "scene": "habits",
+   "start": 248.048,
+   "end": 252.277,
+   "text": "Keep nutritious snacks ready, like fresh fruit, nuts, or yogurt."
+  },
+  {
+   "scene": "habits",
+   "start": 253.564,
+   "end": 258.32,
+   "text": "Try one new healthy recipe each week, and cook it with family or friends."
+  },
+  {
+   "scene": "habits",
+   "start": 259.607,
+   "end": 263.264,
+   "text": "When you shop, choose options with less added sugar and salt."
+  },
+  {
+   "scene": "habits",
+   "start": 264.551,
+   "end": 267.678,
+   "text": "Remember, progress is more important than perfection."
+  },
+  {
+   "scene": "habits",
+   "start": 268.965,
+   "end": 273.541,
+   "text": "And when one habit feels easy, add another. Small steps really add up."
+  },
+  {
+   "scene": "outro",
+   "start": 277.741,
+   "end": 283.25,
+   "text": "Healthy food, healthy life. It's all about variety, balance, and enjoying your food."
+  },
+  {
+   "scene": "outro",
+   "start": 284.537,
+   "end": 286.219,
+   "text": "So now, I'd like to ask you:"
+  },
+  {
+   "scene": "outro",
+   "start": 287.506,
+   "end": 289.277,
+   "text": "What healthy habit will you try?"
+  },
+  {
+   "scene": "outro",
+   "start": 290.886,
+   "end": 294.644,
+   "text": "Tell me in the comments. Thanks for watching, and see you next time!"
+  }
+ ],
+ "total": 300.644
+}

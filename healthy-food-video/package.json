@@ -1,0 +1,26 @@
+{
+  "name": "healthy-food-video",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "studio": "remotion studio",
+    "voice": "python3 audio/make_voice.py",
+    "music": "python3 audio/make_music.py",
+    "render:4k": "remotion render src/index.ts HealthyFood out/healthy-food-healthy-life-4k.mp4 --scale=2 --codec=h264 --crf=18 --pixel-format=yuv420p",
+    "render:1080": "remotion render src/index.ts HealthyFood out/healthy-food-healthy-life-1080p.mp4 --codec=h264 --crf=20 --pixel-format=yuv420p"
+  },
+  "dependencies": {
+    "@fontsource/dm-serif-display": "^5.2.0",
+    "@fontsource/nunito-sans": "^5.2.0",
+    "@remotion/cli": "4.0.534",
+    "@remotion/renderer": "4.0.534",
+    "@remotion/bundler": "4.0.534",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "remotion": "4.0.534"
+  },
+  "devDependencies": {
+    "@types/react": "^19.3.0",
+    "typescript": "^5.9.3"
+  }
+}
