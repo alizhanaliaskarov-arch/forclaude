@@ -126,7 +126,7 @@ Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
         f.write(head)
         for c in cues:
             style = 'Mira' if c.get('who') == 'Мира' else 'Narr'
-            f.write(f"Dialogue: 0,{ts_ass(c['start'])},{ts_ass(c['end'])},{style},,0,0,0,{{\\fad(120,160)}}{c['text']}\n")
+            f.write(f"Dialogue: 0,{ts_ass(c['start'])},{ts_ass(c['end'])},{style},,0,0,0,,{{\\fad(120,160)}}{c['text']}\n")
     print(f'субтитров: {len(cues)}; источник: {"озвучка" if os.path.exists(vt) else "план сценария"}')
 
 

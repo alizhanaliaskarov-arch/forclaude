@@ -24,16 +24,16 @@ if [ -f "$B/voice.wav" ]; then
   VOICE=1
   ffmpeg -nostdin -y -loglevel error -i "$B/music.wav" -i "$B/sfx.wav" -i "$B/voice.wav" -filter_complex \
     "[2:a]aresample=48000,aformat=channel_layouts=stereo,asplit=2[v][key];
-     [0:a]aresample=48000,volume=0.8[m];
+     [0:a]aresample=48000,volume=0.8,volume=enable='between(t,551.5,566.5)':volume=0.45[m];
      [m][key]sidechaincompress=threshold=0.02:ratio=6:attack=30:release=500[duck];
      [1:a]aresample=48000,volume=0.6[s];
-     [duck][s][v]amix=inputs=3:normalize=0,loudnorm=I=-14:TP=-1:LRA=11,aresample=48000,apad,atrim=0:$DUR[a]" \
+     [duck][s][v]amix=inputs=3:normalize=0,highpass=f=28,loudnorm=I=-14:TP=-1:LRA=11,aresample=48000,apad,atrim=0:$DUR[a]" \
     -map "[a]" -c:a pcm_s16le "$B/mix.wav"
 else
   VOICE=0
   ffmpeg -nostdin -y -loglevel error -i "$B/music.wav" -i "$B/sfx.wav" -filter_complex \
-    "[0:a]aresample=48000,volume=0.9[m];[1:a]aresample=48000,volume=0.6[s];
-     [m][s]amix=inputs=2:normalize=0,loudnorm=I=-14:TP=-1:LRA=11,aresample=48000,apad,atrim=0:$DUR[a]" \
+    "[0:a]aresample=48000,volume=0.9,volume=enable='between(t,551.5,566.5)':volume=0.45[m];[1:a]aresample=48000,volume=0.6[s];
+     [m][s]amix=inputs=2:normalize=0,highpass=f=28,loudnorm=I=-14:TP=-1:LRA=11,aresample=48000,apad,atrim=0:$DUR[a]" \
     -map "[a]" -c:a pcm_s16le "$B/mix.wav"
 fi
 
