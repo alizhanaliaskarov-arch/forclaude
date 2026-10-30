@@ -4,7 +4,8 @@
 #   2) сводит звук: музыка + звуки (+ голос, если есть build/voice.wav — музыка приглушается под ним) → −14 LUFS, 48 кГц
 #   3) делает субтитры (film/subs.py) и вшивает их
 #   4) экспортирует out/earth-2126_youtube_2160p.mp4 и out/earth-2126_telegram_1080p.mp4
-# Переменные: SUBS_YT=1|0 — вшивать ли субтитры в YouTube-версию (по умолчанию 1 без голоса, 0 с голосом:
+# Переменные: YT_PRESET / TG_PRESET — пресеты x264 (по умолчанию medium / slow; fast быстрее, файл крупнее).
+# SUBS_YT=1|0 — вшивать ли субтитры в YouTube-версию (по умолчанию 1 без голоса, 0 с голосом:
 # тогда загрузите subtitles_ru.srt на YouTube как отдельные субтитры).
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -45,13 +46,13 @@ ASS="ass=$B/subs.ass:fontsdir=/usr/share/fonts/opentype/inter"
 log "YouTube: 3840×2160, H.264, AAC 320 кбит/с (субтитры вшиты: $SUBS_YT)"
 if [ "$SUBS_YT" = 1 ]; then VF="$ASS,format=yuv420p"; else VF="format=yuv420p"; fi
 ffmpeg -nostdin -y -loglevel error -stats -i "$B/video_4k.mp4" -i "$B/mix.wav" -map 0:v -map 1:a \
-  -vf "$VF" -c:v libx264 -preset medium -crf 18 -maxrate 50M -bufsize 100M -profile:v high -level 5.1 -g 15 -bf 2 \
+  -vf "$VF" -c:v libx264 -preset "${YT_PRESET:-medium}" -crf 18 -maxrate 50M -bufsize 100M -profile:v high -level 5.1 -g 15 -bf 2 \
   -color_primaries bt709 -color_trc bt709 -colorspace bt709 \
   -c:a aac -b:a 320k -ar 48000 -movflags +faststart -shortest "$O/earth-2126_youtube_2160p.mp4"
 
 log "Telegram: 1920×1080, H.264, AAC 192 кбит/с, субтитры вшиты (видео в ленте играет без звука)"
 ffmpeg -nostdin -y -loglevel error -stats -i "$B/video_4k.mp4" -i "$B/mix.wav" -map 0:v -map 1:a \
-  -vf "scale=1920:1080:flags=lanczos,$ASS,format=yuv420p" -c:v libx264 -preset slow -crf 21 -maxrate 6M -bufsize 12M \
+  -vf "scale=1920:1080:flags=lanczos,$ASS,format=yuv420p" -c:v libx264 -preset "${TG_PRESET:-slow}" -crf 21 -maxrate 6M -bufsize 12M \
   -profile:v high -level 4.1 -color_primaries bt709 -color_trc bt709 -colorspace bt709 \
   -c:a aac -b:a 192k -ar 48000 -movflags +faststart -shortest "$O/earth-2126_telegram_1080p.mp4"
 
