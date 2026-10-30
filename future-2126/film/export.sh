@@ -5,6 +5,7 @@
 #   3) делает субтитры (film/subs.py) и вшивает их
 #   4) экспортирует out/earth-2126_youtube_2160p.mp4 и out/earth-2126_telegram_1080p.mp4
 # Переменные: YT_PRESET / TG_PRESET — пресеты x264 (по умолчанию medium / slow; fast быстрее, файл крупнее).
+# SKIP_YT=1 / SKIP_TG=1 — пропустить файл; COMPACT_4K=1 — ещё и компактный 4K (~480 МБ, битрейт COMPACT_KBPS).
 # SUBS_YT=1|0 — вшивать ли субтитры в YouTube-версию (по умолчанию 1 без голоса, 0 с голосом:
 # тогда загрузите subtitles_ru.srt на YouTube как отдельные субтитры).
 set -euo pipefail
@@ -43,18 +44,31 @@ python3 film/subs.py
 SUBS_YT=${SUBS_YT:-$((1 - VOICE))}
 ASS="ass=$B/subs.ass:fontsdir=/usr/share/fonts/opentype/inter"
 
-log "YouTube: 3840×2160, H.264, AAC 320 кбит/с (субтитры вшиты: $SUBS_YT)"
 if [ "$SUBS_YT" = 1 ]; then VF="$ASS,format=yuv420p"; else VF="format=yuv420p"; fi
+if [ "${SKIP_YT:-0}" != 1 ]; then
+log "YouTube: 3840×2160, H.264, AAC 320 кбит/с (субтитры вшиты: $SUBS_YT)"
 ffmpeg -nostdin -y -loglevel error -stats -i "$B/video_4k.mp4" -i "$B/mix.wav" -map 0:v -map 1:a \
   -vf "$VF" -c:v libx264 -preset "${YT_PRESET:-medium}" -crf 18 -maxrate 50M -bufsize 100M -profile:v high -level 5.1 -g 15 -bf 2 \
   -color_primaries bt709 -color_trc bt709 -colorspace bt709 \
   -c:a aac -b:a 320k -ar 48000 -movflags +faststart -shortest "$O/earth-2126_youtube_2160p.mp4"
+fi
 
+if [ "${SKIP_TG:-0}" != 1 ]; then
 log "Telegram: 1920×1080, H.264, AAC 192 кбит/с, субтитры вшиты (видео в ленте играет без звука)"
 ffmpeg -nostdin -y -loglevel error -stats -i "$B/video_4k.mp4" -i "$B/mix.wav" -map 0:v -map 1:a \
   -vf "scale=1920:1080:flags=lanczos,$ASS,format=yuv420p" -c:v libx264 -preset "${TG_PRESET:-slow}" -crf 21 -maxrate 6M -bufsize 12M \
   -profile:v high -level 4.1 -color_primaries bt709 -color_trc bt709 -colorspace bt709 \
   -c:a aac -b:a 192k -ar 48000 -movflags +faststart -shortest "$O/earth-2126_telegram_1080p.mp4"
+fi
+
+if [ "${COMPACT_4K:-0}" = 1 ]; then
+  # компактный 4K (~4 Мбит/с, около 480 МБ): удобно пересылать; для плоской графики потери почти не видны
+  log "YouTube компактный: 3840×2160, H.264 ${COMPACT_KBPS:-4100} кбит/с, AAC 192 кбит/с"
+  ffmpeg -nostdin -y -loglevel error -stats -i "$B/video_4k.mp4" -i "$B/mix.wav" -map 0:v -map 1:a \
+    -vf "$VF" -c:v libx264 -preset medium -b:v "${COMPACT_KBPS:-4100}k" -maxrate 8M -bufsize 16M -profile:v high -level 5.1 -g 15 -bf 2 \
+    -color_primaries bt709 -color_trc bt709 -colorspace bt709 \
+    -c:a aac -b:a 192k -ar 48000 -movflags +faststart -shortest "$O/earth-2126_youtube_2160p_compact.mp4"
+fi
 
 log "готово:"
 for f in "$O"/earth-2126_*.mp4; do

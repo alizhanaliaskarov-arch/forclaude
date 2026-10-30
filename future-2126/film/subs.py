@@ -30,6 +30,7 @@ def scenes():
             body = re.sub(r'\*\*\[.*?\]\*\*', '', body)
             body = re.sub(r'\*\(.*?\)\*', '', body)
             body = re.sub(r'\s+', ' ', body).strip()
+            body = re.sub(r'\s+([.,!?…:;])', r'\1', body)  # пробел, оставшийся от вырезанной пометки
             lines.append((sp, body))
         out.append((sid, t0, t1, lines))
     return out
