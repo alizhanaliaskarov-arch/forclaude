@@ -8,7 +8,7 @@ simple breakfasts, lunches and dinners, drinking water with lemon and mint, shar
 |---|---|---|
 | `out/healthy-food-healthy-life-4k60.mp4` | YouTube | 3840×2160 (4K UHD), 60 fps, H.264 + AAC, no burned-in subtitles. Sent with the chat because it is over GitHub’s 100 MB file limit (not in git) |
 | `out/healthy-food-healthy-life.en.srt` | YouTube | English captions: upload as subtitles (YouTube Studio → Subtitles) |
-| `out/healthy-food-healthy-life-1080p-telegram.mp4` | Telegram | 1920×1080, 30 fps, H.264 + AAC, subtitles burned in for muted autoplay |
+| `out/healthy-food-healthy-life-1080p-telegram.mp4` | Telegram | 1920×1080, 30 fps, H.264 (BT.709, standard range) + AAC, subtitles burned in for muted autoplay |
 
 **Why 60 fps and not 120:** YouTube and Telegram play at most 60 fps, so a 120 fps file would be converted down anyway.
 The animation is computed continuously, so 60 fps is twice as smooth as 30 fps at the same speed.
@@ -39,7 +39,8 @@ KOKORO_DIR=/path/to/model python3 audio/make_voice.py   # voice + src/timeline.j
 python3 audio/make_music.py                              # music, mix, master
 python3 audio/make_srt.py                                # YouTube captions
 npx remotion render src/index.ts HealthyFood60 out/healthy-food-healthy-life-4k60.mp4 --scale=2 --crf=20   # 4K60, no subs
-npx remotion render src/index.ts HealthyFood out/healthy-food-healthy-life-1080p-telegram.mp4 --crf=20     # 1080p30 + subs
+npx remotion render src/index.ts HealthyFood out/raw/telegram.mp4 --crf=20                               # 1080p30 + subs
+scripts/finalize.sh out/raw/telegram.mp4 out/healthy-food-healthy-life-1080p-telegram.mp4 20              # standard BT.709 range for phones
 npx remotion studio                                       # preview
 node scripts/stills.mjs out/stills 10 60 120              # stills for checking (seconds)
 ```

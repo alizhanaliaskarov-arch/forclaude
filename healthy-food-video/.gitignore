@@ -8,3 +8,4 @@ out/render-*.log
 public/music.wav
 public/soundtrack_vo.wav
 out/*4k60*.mp4
+out/raw
