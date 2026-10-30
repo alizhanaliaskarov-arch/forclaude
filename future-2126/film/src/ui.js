@@ -59,6 +59,9 @@ function yearChip(ctx, T, shot) {
   } else if (y1) {
     ctx.fillStyle = col(y1);
     ctx.fillText(String(y1), 120, 85);
+  } else if (y0) {
+    ctx.fillStyle = col(y0); // следующий план без года — прежний год уходит вместе с плашкой
+    ctx.fillText(String(y0), 120, 85);
   }
   ctx.restore();
   ctx.restore();
