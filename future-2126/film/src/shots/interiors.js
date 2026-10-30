@@ -236,9 +236,17 @@ export const interiorShots = {
       g.stroke();
     }
     g.globalCompositeOperation = 'source-over';
-    const fx = 500 + clamp(t / 7) * 900, fy = 880 + Math.sin(t * 3) * 30;
-    rrect(g, fx - 16, fy - 140, 32, 150, 16, AYA.skin);
-    rrect(g, fx - 60, fy - 300, 120, 180, 50, AYA.coat);
+    const fx = 500 + clamp(t / 7) * 900, fy = 900 + Math.sin(t * 3) * 30;
+    glow(g, fx, fy, 60, '#FFFFFF', 0.6);
+    g.save();
+    g.translate(fx, fy);
+    g.rotate(1.25);
+    rrect(g, -46, -680, 92, 540, 40, AYA.coat); // рукав дождевика — к правому плечу Аи
+    rrect(g, -46, -168, 92, 30, 12, AYA.coatDk);
+    rrect(g, -9, -70, 18, 76, 9, AYA.skin); // указательный палец касается стола
+    ellipse(g, 0, -110, 38, 46, AYA.skin);
+    for (let i = 0; i < 3; i++) rrect(g, 10 + i * 4, -120 + i * 14, 30, 14, 7, AYA.skinSh);
+    g.restore();
   },
   // S14-2: отделение для новорождённых
   incubator(g, t, dur, p, cache) {

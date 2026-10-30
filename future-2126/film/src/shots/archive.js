@@ -400,15 +400,32 @@ export const archiveShots = {
       });
       g.fillStyle = G(140);
       g.fillRect(0, 940, W, 140);
-      const people = [[560, 1.0, 50], [700, 0.6, 140], [800, 0.7, 60], [900, 0.5, 170], [1180, 0.95, 70], [1040, 0.55, 150], [1320, 0.65, 90], [1430, 0.45, 160], [600, 0.38, 180]];
-      people.forEach(([x, s, tone], i) => {
-        const sway = Math.sin(t * 1.3 + i) * 2;
-        const hh = 520 * s;
+      // взрослые по краям, дети по росту между ними
+      const R = rng(19);
+      man1926(g, 560 + Math.sin(t * 1.1) * 2, 1000, 540, 0, 1, 40);
+      // мать в длинном платье
+      g.save();
+      g.translate(1330 + Math.sin(t * 1.3 + 1) * 2, 1000);
+      poly(g, [[-70, -440], [70, -440], [120, 0], [-120, 0]], G(70));
+      rrect(g, -60, -470, 120, 60, 20, G(80));
+      circle(g, 0, -500, 40, G(160));
+      circle(g, 0, -530, 32, G(55));
+      g.restore();
+      [[690, 0.62], [790, 0.5], [880, 0.72], [980, 0.42], [1070, 0.58], [1160, 0.36], [1240, 0.48]].forEach(([x, s], i) => {
+        const hh = 520 * s, sw = Math.sin(t * 1.5 + i * 0.8) * 1.5;
         g.save();
-        g.translate(x + sway, 1000);
-        poly(g, [[-hh * 0.17, -hh * 0.82], [hh * 0.17, -hh * 0.82], [hh * 0.22, 0], [-hh * 0.22, 0]], G(tone));
-        circle(g, 0, -hh * 0.9, hh * 0.085, G(Math.min(225, tone + 70)));
-        if (i === 0 || i === 4) rrect(g, -hh * 0.11, -hh * 1.02, hh * 0.22, hh * 0.07, 3, G(40));
+        g.translate(x + sw, 1000);
+        const tone = 60 + R() * 120;
+        if (i % 2) poly(g, [[-hh * 0.14, -hh * 0.78], [hh * 0.14, -hh * 0.78], [hh * 0.22, -hh * 0.2], [-hh * 0.22, -hh * 0.2]], G(tone));
+        else rrect(g, -hh * 0.15, -hh * 0.78, hh * 0.3, hh * 0.5, hh * 0.05, G(tone));
+        g.fillStyle = G(tone - 30);
+        g.fillRect(-hh * 0.11, -hh * 0.3, hh * 0.09, hh * 0.3);
+        g.fillRect(hh * 0.02, -hh * 0.3, hh * 0.09, hh * 0.3);
+        circle(g, 0, -hh * 0.88, hh * 0.11, G(170));
+        g.fillStyle = G(50 + R() * 40);
+        g.beginPath();
+        g.arc(0, -hh * 0.9, hh * 0.115, Math.PI, 0);
+        g.fill();
         g.restore();
       });
     });
