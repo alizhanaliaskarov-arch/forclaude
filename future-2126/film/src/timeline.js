@@ -157,7 +157,7 @@ export const EVENTS = [
   {sc: 'S20', at: 3.6, dur: 6.0, kind: 'fact', text: '1926 → 1969', sub: '43 года от ракеты Годдарда до Луны'},
   {sc: 'S20', at: 30.0, dur: 9.0, kind: 'conf', level: 2, label: 'Луна · Марс — низкая'},
   {sc: 'S21', at: 2.5, dur: 8.0, kind: 'fact', text: '«Бледно-голубая точка»', sub: '«Вояджер-1», 14.02.1990 · реконструкция'},
-  {sc: 'S21', at: 31.0, dur: 3.6, kind: 'quote', text: 'Запасной Земли у нас нет'},
+  {sc: 'S21', at: 30.6, dur: 4.4, kind: 'quote', text: 'Запасной Земли у нас нет', bg: 'black'},
   {sc: 'S22', at: 9.0, dur: 9.0, kind: 'equation', text: '2026 + 100 = 2126'},
   {sc: 'S23', at: 21.0, dur: 8.6, kind: 'quote', text: 'Будущее — это то, что мы строим'},
   {sc: 'S25', at: 1.0, dur: 14.0, kind: 'end'},

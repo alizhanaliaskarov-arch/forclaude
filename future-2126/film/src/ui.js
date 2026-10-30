@@ -361,6 +361,15 @@ function stamp(ctx, lt, e) {
 function quote(ctx, lt, e) {
   const a = fade(lt, 0, e.dur, 0.7, 0.8);
   ctx.save();
+  if (e.bg === 'black') {
+    // по сценарию — на чёрном экране, затем тишина
+    ctx.fillStyle = `rgba(0,0,0,${Math.min(1, lt / 0.6)})`;
+    ctx.fillRect(0, 0, W, H);
+  } else {
+    ctx.globalAlpha = a;
+    ctx.fillStyle = vgrad(ctx, 0, H / 2 - 160, H / 2 + 160, [[0, 'rgba(5,10,18,0)'], [0.5, 'rgba(5,10,18,0.55)'], [1, 'rgba(5,10,18,0)']]);
+    ctx.fillRect(0, H / 2 - 160, W, 320);
+  }
   ctx.globalAlpha = a;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
