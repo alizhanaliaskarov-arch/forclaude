@@ -1,0 +1,216 @@
+{
+ "_comment": "Shared by the Remotion scenes and audio/make_audio.py. Scene event times are seconds from the scene start. A callout appears at cue start + f * cue length (cue = index into timing.json cues); x, y are source-image pixels (1536x1024); side = where the label sits. Optional life = seconds before the callout fades out (default: until the scene ends).",
+ "scenes": {
+  "intro": {
+   "drlOn": 0.7,
+   "photoIn": 1.6,
+   "title": 4.2
+  },
+  "silhouette": {
+   "chapter": 0.3,
+   "draw": 0.9,
+   "drawEnd": 4.4,
+   "restore": 9.4
+  },
+  "light": {
+   "chapter": 0.3,
+   "dark": 0.45,
+   "ignite": 1.25,
+   "restore": 4.4
+  },
+  "aero": {
+   "chapter": 0.3,
+   "flow": 0.9
+  },
+  "wheels": {
+   "chapter": 0.3,
+   "ring": 0.7
+  },
+  "details": {
+   "chapter": 0.3,
+   "sweep1": 1.9,
+   "sweep2": 9.2,
+   "swatchOut": 6.9
+  },
+  "verdict": {
+   "endcard": 6.25,
+   "lightsOff": 10.1
+  }
+ },
+ "callouts": [
+  {
+   "scene": "silhouette",
+   "cue": 2,
+   "f": 0.42,
+   "x": 455,
+   "y": 486,
+   "label": "ДЛИННЫЙ КАПОТ",
+   "side": "ul"
+  },
+  {
+   "scene": "silhouette",
+   "cue": 2,
+   "f": 0.74,
+   "x": 860,
+   "y": 338,
+   "label": "НИЗКАЯ КАБИНА",
+   "side": "ur"
+  },
+  {
+   "scene": "silhouette",
+   "cue": 3,
+   "f": 0.12,
+   "x": 1196,
+   "y": 388,
+   "label": "ПЛАВНАЯ ЛИНИЯ КРЫШИ",
+   "side": "ur"
+  },
+  {
+   "scene": "silhouette",
+   "cue": 4,
+   "f": 0.05,
+   "x": 1300,
+   "y": 500,
+   "label": "ШИРОКИЕ ЗАДНИЕ АРКИ",
+   "side": "dr"
+  },
+  {
+   "scene": "light",
+   "cue": 6,
+   "f": 0.35,
+   "x": 668,
+   "y": 592,
+   "label": "УЗКИЕ LED-ФАРЫ",
+   "side": "dr"
+  },
+  {
+   "scene": "light",
+   "cue": 7,
+   "f": 0.62,
+   "x": 600,
+   "y": 601,
+   "label": "СВЕТОВАЯ ПОДПИСЬ",
+   "side": "dl"
+  },
+  {
+   "scene": "aero",
+   "cue": 10,
+   "f": 0.02,
+   "x": 372,
+   "y": 706,
+   "label": "ВОЗДУХОЗАБОРНИК",
+   "side": "dl",
+   "life": 5.2
+  },
+  {
+   "scene": "aero",
+   "cue": 10,
+   "f": 0.48,
+   "x": 520,
+   "y": 790,
+   "label": "СПЛИТТЕР",
+   "side": "dr",
+   "life": 4.6
+  },
+  {
+   "scene": "aero",
+   "cue": 11,
+   "f": 0.05,
+   "x": 560,
+   "y": 500,
+   "label": "ВЫРЕЗЫ НА КАПОТЕ",
+   "side": "ur"
+  },
+  {
+   "scene": "aero",
+   "cue": 12,
+   "f": 0.16,
+   "x": 985,
+   "y": 572,
+   "label": "ЖАБРЫ",
+   "side": "ur"
+  },
+  {
+   "scene": "aero",
+   "cue": 12,
+   "f": 0.42,
+   "x": 1090,
+   "y": 690,
+   "label": "ПОРОГИ",
+   "side": "dr"
+  },
+  {
+   "scene": "wheels",
+   "cue": 13,
+   "f": 0.3,
+   "x": 866,
+   "y": 612,
+   "label": "КОВАНЫЕ ДИСКИ",
+   "side": "dl"
+  },
+  {
+   "scene": "wheels",
+   "cue": 14,
+   "f": 0.45,
+   "x": 905,
+   "y": 650,
+   "label": "БРОНЗОВЫЕ СУППОРТЫ",
+   "side": "ur"
+  },
+  {
+   "scene": "wheels",
+   "cue": 15,
+   "f": 0.1,
+   "x": 900,
+   "y": 544,
+   "label": "НИЗКИЙ ПРОФИЛЬ",
+   "side": "ur"
+  },
+  {
+   "scene": "wheels",
+   "cue": 15,
+   "f": 0.72,
+   "x": 818,
+   "y": 690,
+   "label": "ПРОТЕКТОР",
+   "side": "dl"
+  },
+  {
+   "scene": "details",
+   "cue": 17,
+   "f": 0.3,
+   "x": 1060,
+   "y": 610,
+   "label": "ОТРАЖЕНИЯ ГОРОДА",
+   "side": "dl",
+   "life": 3.4
+  },
+  {
+   "scene": "details",
+   "cue": 18,
+   "f": 0.38,
+   "x": 1170,
+   "y": 486,
+   "label": "УТОПЛЕННАЯ РУЧКА",
+   "side": "ur"
+  },
+  {
+   "scene": "details",
+   "cue": 18,
+   "f": 0.7,
+   "x": 1086,
+   "y": 424,
+   "label": "ЗЕРКАЛО НА НОЖКЕ",
+   "side": "ul"
+  },
+  {
+   "scene": "details",
+   "cue": 19,
+   "f": 0.15,
+   "x": 1004,
+   "y": 600,
+   "label": "РОВНЫЕ СТЫКИ",
+   "side": "dl"
+  }
+ ]
+}
