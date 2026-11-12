@@ -1,0 +1,21 @@
+{
+  "name": "ryvok-reel",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "studio": "remotion studio",
+    "render": "remotion render src/index.ts Reel out/ryvok-reel.mp4 --browser-executable=/opt/pw-browsers/chromium_headless_shell-1243/chrome-headless-shell-linux64/chrome-headless-shell --codec=h264 --crf=17 --pixel-format=yuv420p",
+    "audio": "python3 audio/make_audio.py",
+    "voice": "python3 audio/make_voice.py"
+  },
+  "dependencies": {
+    "@fontsource/oswald": "^5.3.0",
+    "@fontsource/unbounded": "^5.3.0",
+    "@remotion/cli": "^4.0.534",
+    "@types/react": "^19.3.0",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "remotion": "^4.0.534",
+    "typescript": "^7.0.2"
+  }
+}
