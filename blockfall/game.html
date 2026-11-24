@@ -1,0 +1,529 @@
+<title>Блокопад</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;700&family=IBM+Plex+Sans:wght@400;500&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: three-column console (hold+stats | well | queue); on phones the side panels fold into one strip above the well and a touch pad sits below. */
+:root {
+  --bg: #e6e9f0;
+  --panel: #f5f6fa;
+  --well: #d8dce6;
+  --grid: #c9cedb;
+  --fg: #1c2133;
+  --muted: #5f667d;
+  --line: #bfc5d4;
+  --accent: #3a4fd9;
+  --p-i: #1597b8; --p-o: #d9a21b; --p-t: #8a46c9; --p-s: #2f9e58;
+  --p-z: #d6453d; --p-j: #3a5fd9; --p-l: #e07a26;
+  --f-display: "Chakra Petch", "Segoe UI", system-ui, sans-serif;
+  --f-body: "IBM Plex Sans", system-ui, -apple-system, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12141f; --panel: #1a1d2b; --well: #0c0e17; --grid: #1d2131;
+    --fg: #e4e7f2; --muted: #8b91aa; --line: #2b3045; --accent: #8193ff;
+    --p-i: #35c6e8; --p-o: #f3c443; --p-t: #b27af0; --p-s: #4fd07f;
+    --p-z: #f26a5f; --p-j: #6d8bff; --p-l: #ff9a4a;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12141f; --panel: #1a1d2b; --well: #0c0e17; --grid: #1d2131;
+  --fg: #e4e7f2; --muted: #8b91aa; --line: #2b3045; --accent: #8193ff;
+  --p-i: #35c6e8; --p-o: #f3c443; --p-t: #b27af0; --p-s: #4fd07f;
+  --p-z: #f26a5f; --p-j: #6d8bff; --p-l: #ff9a4a;
+  color-scheme: dark;
+}
+html, body { height: 100%; }
+body {
+  background: var(--bg); color: var(--fg); font-family: var(--f-body);
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  box-sizing: border-box; overflow: hidden;
+  -webkit-user-select: none; user-select: none; touch-action: manipulation;
+}
+.app { height: 100%; display: flex; flex-direction: column; gap: 12px; padding-block: 14px; box-sizing: border-box; max-width: 760px; margin: 0 auto; }
+header { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+h1 { font-family: var(--f-display); font-weight: 700; font-size: 1.6rem; margin: 0; letter-spacing: .02em; text-wrap: balance; }
+h1 span { color: var(--accent); }
+.hint { color: var(--muted); font-size: .8rem; }
+main { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr auto 1fr; grid-template-rows: minmax(0, 1fr); gap: 16px; align-items: start; }
+.side { display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.side.left { align-items: flex-end; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px; width: 132px; box-sizing: border-box; }
+.label { font-family: var(--f-display); font-size: .7rem; text-transform: uppercase; letter-spacing: .14em; color: var(--muted); margin-bottom: 6px; }
+.value { font-family: var(--f-mono); font-weight: 700; font-size: 1.25rem; font-variant-numeric: tabular-nums; }
+.stats { display: grid; gap: 10px; }
+.best-inline { display: none; }
+canvas.mini { display: block; width: 100%; height: auto; }
+.well-wrap { position: relative; height: 100%; display: flex; justify-content: center; min-height: 0; }
+#board { display: block; border-radius: 8px; border: 1px solid var(--line); background: var(--well); }
+.overlay {
+  position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px;
+  text-align: center; padding: 20px; box-sizing: border-box;
+  background: color-mix(in srgb, var(--bg) 78%, transparent); border-radius: 8px; backdrop-filter: blur(2px);
+}
+.overlay h2 { font-family: var(--f-display); font-size: 1.5rem; margin: 0; }
+.overlay p { margin: 0; color: var(--muted); font-size: .9rem; max-width: 26ch; line-height: 1.45; }
+.overlay .big { font-family: var(--f-mono); font-size: 1.9rem; color: var(--fg); font-weight: 700; }
+button {
+  font-family: var(--f-display); font-weight: 700; font-size: 1rem; letter-spacing: .06em; text-transform: uppercase;
+  background: var(--accent); color: var(--panel); border: 0; border-radius: 8px; padding: 10px 22px; cursor: pointer;
+}
+button:focus-visible { outline: 3px solid var(--fg); outline-offset: 2px; }
+.keys { display: grid; grid-template-columns: auto auto; gap: 4px 10px; font-size: .78rem; color: var(--muted); text-align: left; }
+kbd { font-family: var(--f-mono); font-size: .72rem; background: var(--panel); color: var(--fg); border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; }
+.pad { display: none; grid-template-columns: repeat(6, 1fr); gap: 8px; }
+.pad button { padding: 14px 0; font-size: 1.15rem; background: var(--panel); color: var(--fg); border: 1px solid var(--line); text-transform: none; letter-spacing: 0; }
+.pad button:active { background: var(--line); }
+.pad .accent { background: var(--accent); color: var(--panel); border-color: var(--accent); }
+.flash { animation: pop .35s ease-out; }
+@keyframes pop { 0% { transform: scale(1.18); color: var(--accent); } 100% { transform: scale(1); } }
+@media (prefers-reduced-motion: reduce) { .flash { animation: none; } }
+
+@media (max-width: 640px), (pointer: coarse) {
+  .pad { display: grid; }
+  .hint { display: none; }
+}
+@media (max-width: 640px) {
+  .app { gap: 10px; padding-block: 10px; }
+  h1 { font-size: 1.25rem; }
+  main { grid-template-columns: 1fr; grid-template-rows: auto minmax(0, 1fr); gap: 10px; }
+  #next { max-height: 76px; width: auto; margin: 0 auto; }
+  .best-card { display: none; }
+  .side { display: contents; }
+  .strip { display: grid; grid-template-columns: 64px 1fr 64px; gap: 8px; }
+  .card { width: auto; padding: 6px 8px; }
+  .stats { grid-template-columns: repeat(2, 1fr); gap: 4px 8px; }
+  .value { font-size: 1rem; }
+  .label { font-size: .6rem; margin-bottom: 2px; letter-spacing: .1em; }
+  .keys { display: none; }
+  .best-inline { display: block; }
+}
+@media (min-width: 641px) { .strip { display: contents; } .side.left { order: 0; } .well-wrap { order: 1; } .side.right { order: 2; } }
+</style>
+
+<div class="app">
+  <header>
+    <h1>Блоко<span>пад</span></h1>
+    <div class="hint"><kbd>←</kbd> <kbd>→</kbd> ход · <kbd>↑</kbd> поворот · <kbd>Пробел</kbd> сброс · <kbd>C</kbd> запас · <kbd>P</kbd> пауза</div>
+  </header>
+  <main>
+    <div class="strip">
+      <div class="side left">
+        <div class="card"><div class="label">Запас</div><canvas class="mini" id="hold" width="120" height="80"></canvas></div>
+        <div class="card stats">
+          <div><div class="label">Очки</div><div class="value" id="score">0</div></div>
+          <div><div class="label">Линии</div><div class="value" id="lines">0</div></div>
+          <div><div class="label">Уровень</div><div class="value" id="level">1</div></div>
+          <div class="best-inline"><div class="label">Рекорд</div><div class="value" id="best2">0</div></div>
+        </div>
+      </div>
+      <div class="side right">
+        <div class="card"><div class="label">Далее</div><canvas class="mini" id="next" width="120" height="240"></canvas></div>
+        <div class="card best-card"><div class="label">Рекорд</div><div class="value" id="best">0</div></div>
+      </div>
+    </div>
+    <div class="well-wrap" id="wellWrap">
+      <canvas id="board"></canvas>
+      <div class="overlay" id="overlay">
+        <h2 id="ovTitle">Блокопад</h2>
+        <div class="big" id="ovScore" hidden>0</div>
+        <p id="ovText">Собирайте сплошные ряды из падающих фигур. Каждые 10 линий скорость растёт.</p>
+        <button id="startBtn" type="button">Играть</button>
+        <div class="keys">
+          <span><kbd>←</kbd> <kbd>→</kbd></span><span>сдвиг</span>
+          <span><kbd>↑</kbd> <kbd>X</kbd> / <kbd>Z</kbd></span><span>поворот вправо / влево</span>
+          <span><kbd>↓</kbd></span><span>ускорить</span>
+          <span><kbd>Пробел</kbd></span><span>уронить</span>
+          <span><kbd>C</kbd> <kbd>Shift</kbd></span><span>отложить в запас</span>
+          <span><kbd>P</kbd> <kbd>Esc</kbd></span><span>пауза</span>
+        </div>
+      </div>
+    </div>
+  </main>
+  <div class="pad" id="pad">
+    <button type="button" data-act="hold" aria-label="Запас">⇄</button>
+    <button type="button" data-act="left" aria-label="Влево">◀</button>
+    <button type="button" data-act="rot" aria-label="Повернуть">⟳</button>
+    <button type="button" data-act="right" aria-label="Вправо">▶</button>
+    <button type="button" data-act="soft" aria-label="Вниз">▼</button>
+    <button type="button" data-act="drop" class="accent" aria-label="Уронить">⤓</button>
+  </div>
+</div>
+
+<script>
+(() => {
+  const W = 10, H = 20, HIDDEN = 2;
+  const SHAPES = {
+    I: [[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]],
+    O: [[1,1],[1,1]],
+    T: [[0,1,0],[1,1,1],[0,0,0]],
+    S: [[0,1,1],[1,1,0],[0,0,0]],
+    Z: [[1,1,0],[0,1,1],[0,0,0]],
+    J: [[1,0,0],[1,1,1],[0,0,0]],
+    L: [[0,0,1],[1,1,1],[0,0,0]],
+  };
+  // SRS kicks, y already flipped to "down is positive"
+  const K = (a) => a.map(([x, y]) => [x, -y]);
+  const KICKS = {
+    '0>1': K([[0,0],[-1,0],[-1,1],[0,-2],[-1,-2]]), '1>0': K([[0,0],[1,0],[1,-1],[0,2],[1,2]]),
+    '1>2': K([[0,0],[1,0],[1,-1],[0,2],[1,2]]),     '2>1': K([[0,0],[-1,0],[-1,1],[0,-2],[-1,-2]]),
+    '2>3': K([[0,0],[1,0],[1,1],[0,-2],[1,-2]]),    '3>2': K([[0,0],[-1,0],[-1,-1],[0,2],[-1,2]]),
+    '3>0': K([[0,0],[-1,0],[-1,-1],[0,2],[-1,2]]),  '0>3': K([[0,0],[1,0],[1,1],[0,-2],[1,-2]]),
+  };
+  const KICKS_I = {
+    '0>1': K([[0,0],[-2,0],[1,0],[-2,-1],[1,2]]), '1>0': K([[0,0],[2,0],[-1,0],[2,1],[-1,-2]]),
+    '1>2': K([[0,0],[-1,0],[2,0],[-1,2],[2,-1]]), '2>1': K([[0,0],[1,0],[-2,0],[1,-2],[-2,1]]),
+    '2>3': K([[0,0],[2,0],[-1,0],[2,1],[-1,-2]]), '3>2': K([[0,0],[-2,0],[1,0],[-2,-1],[1,2]]),
+    '3>0': K([[0,0],[1,0],[-2,0],[1,-2],[-2,1]]), '0>3': K([[0,0],[-1,0],[2,0],[-1,2],[2,-1]]),
+  };
+  const LINE_PTS = [0, 100, 300, 500, 800];
+
+  const $ = (id) => document.getElementById(id);
+  const board = $('board'), bctx = board.getContext('2d');
+  const holdC = $('hold'), hctx = holdC.getContext('2d');
+  const nextC = $('next'), nctx = nextC.getContext('2d');
+  const overlay = $('overlay');
+
+  let colors = {};
+  function readColors() {
+    const cs = getComputedStyle(document.documentElement);
+    const g = (n) => cs.getPropertyValue(n).trim();
+    colors = { well: g('--well'), grid: g('--grid'), fg: g('--fg'), muted: g('--muted'), panel: g('--panel'),
+      I: g('--p-i'), O: g('--p-o'), T: g('--p-t'), S: g('--p-s'), Z: g('--p-z'), J: g('--p-j'), L: g('--p-l') };
+  }
+
+  const rotCW = (m) => m.map((row, y) => row.map((_, x) => m[m.length - 1 - x][y]));
+  const rotCCW = (m) => m.map((row, y) => row.map((_, x) => m[x][m.length - 1 - y]));
+
+  let grid, piece, queue, bag, holdType, canHold, score, lines, level, state, best;
+  let dropTimer = 0, lockTimer = 0, lockResets = 0, clearing = null, last = 0;
+
+  try { best = +localStorage.getItem('blockfall-best') || 0; } catch { best = 0; }
+
+  function emptyGrid() { return Array.from({ length: H + HIDDEN }, () => Array(W).fill(null)); }
+  function refillBag() {
+    bag = Object.keys(SHAPES);
+    for (let i = bag.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [bag[i], bag[j]] = [bag[j], bag[i]]; }
+  }
+  function takeFromBag() { if (!bag || !bag.length) refillBag(); return bag.pop(); }
+  function makePiece(type) {
+    const m = SHAPES[type].map((r) => r.slice());
+    return { type, m, r: 0, x: Math.floor((W - m.length) / 2), y: HIDDEN - 1 };
+  }
+  function collides(p, m = p.m, x = p.x, y = p.y) {
+    for (let r = 0; r < m.length; r++) for (let c = 0; c < m.length; c++) {
+      if (!m[r][c]) continue;
+      const gx = x + c, gy = y + r;
+      if (gx < 0 || gx >= W || gy >= H + HIDDEN) return true;
+      if (gy >= 0 && grid[gy][gx]) return true;
+    }
+    return false;
+  }
+  function spawn(type) {
+    piece = makePiece(type || queue.shift());
+    while (queue.length < 5) queue.push(takeFromBag());
+    dropTimer = 0; lockTimer = 0; lockResets = 0;
+    if (collides(piece)) gameOver();
+    drawSide();
+  }
+  function gravityMs() { return Math.max(16, Math.pow(0.8 - (level - 1) * 0.007, level - 1) * 1000); }
+
+  function newGame() {
+    grid = emptyGrid(); bag = []; queue = []; holdType = null; canHold = true;
+    score = 0; lines = 0; level = 1; clearing = null;
+    while (queue.length < 5) queue.push(takeFromBag());
+    state = 'play'; overlay.hidden = true;
+    spawn(); updateStats();
+  }
+
+  function onGround() { return collides(piece, piece.m, piece.x, piece.y + 1); }
+  function touchLock() { if (onGround() && lockResets < 15) { lockTimer = 0; lockResets++; } }
+  function move(dx) {
+    if (state !== 'play' || clearing) return false;
+    if (!collides(piece, piece.m, piece.x + dx, piece.y)) { piece.x += dx; touchLock(); return true; }
+    return false;
+  }
+  function rotate(dir) {
+    if (state !== 'play' || clearing || piece.type === 'O') return;
+    const nr = (piece.r + (dir > 0 ? 1 : 3)) % 4;
+    const m = dir > 0 ? rotCW(piece.m) : rotCCW(piece.m);
+    const table = piece.type === 'I' ? KICKS_I : KICKS;
+    for (const [kx, ky] of table[piece.r + '>' + nr]) {
+      if (!collides(piece, m, piece.x + kx, piece.y + ky)) {
+        piece.m = m; piece.r = nr; piece.x += kx; piece.y += ky; touchLock(); return;
+      }
+    }
+  }
+  function softDrop() {
+    if (state !== 'play' || clearing) return;
+    if (!onGround()) { piece.y++; score += 1; dropTimer = 0; updateStats(); }
+  }
+  function hardDrop() {
+    if (state !== 'play' || clearing) return;
+    let n = 0; while (!onGround()) { piece.y++; n++; }
+    score += n * 2; lock();
+  }
+  function hold() {
+    if (state !== 'play' || clearing || !canHold) return;
+    const cur = piece.type;
+    if (holdType) { const t = holdType; holdType = cur; spawn(t); }
+    else { holdType = cur; spawn(); }
+    canHold = false; drawSide();
+  }
+  function lock() {
+    let above = true;
+    piece.m.forEach((row, r) => row.forEach((v, c) => {
+      if (!v) return;
+      const gy = piece.y + r;
+      if (gy >= 0) grid[gy][piece.x + c] = piece.type;
+      if (gy >= HIDDEN) above = false;
+    }));
+    if (above) { gameOver(); return; }
+    const full = [];
+    for (let y = 0; y < grid.length; y++) if (grid[y].every(Boolean)) full.push(y);
+    canHold = true;
+    if (full.length) { clearing = { rows: full, t: 0 }; piece = null; }
+    else spawn();
+    updateStats();
+  }
+  function finishClear() {
+    const n = clearing.rows.length;
+    grid = grid.filter((_, y) => !clearing.rows.includes(y));
+    while (grid.length < H + HIDDEN) grid.unshift(Array(W).fill(null));
+    score += LINE_PTS[n] * level;
+    lines += n;
+    const nl = Math.floor(lines / 10) + 1;
+    if (nl !== level) { level = nl; bump('level'); }
+    bump('lines');
+    clearing = null; spawn(); updateStats();
+  }
+  function bump(id) { const el = $(id); el.classList.remove('flash'); void el.offsetWidth; el.classList.add('flash'); }
+  function gameOver() {
+    state = 'over';
+    if (score > best) { best = score; try { localStorage.setItem('blockfall-best', String(best)); } catch {} }
+    updateStats();
+    $('ovTitle').textContent = 'Игра окончена';
+    $('ovScore').hidden = false; $('ovScore').textContent = score.toLocaleString('ru-RU');
+    $('ovText').textContent = `Линий: ${lines}, уровень ${level}. Рекорд: ${best.toLocaleString('ru-RU')}.`;
+    $('startBtn').textContent = 'Ещё раз';
+    overlay.hidden = false; $('startBtn').focus();
+  }
+  function togglePause() {
+    if (state === 'play') {
+      state = 'pause';
+      $('ovTitle').textContent = 'Пауза'; $('ovScore').hidden = true;
+      $('ovText').textContent = 'Нажмите P или кнопку, чтобы продолжить.';
+      $('startBtn').textContent = 'Продолжить';
+      overlay.hidden = false;
+    } else if (state === 'pause') { state = 'play'; overlay.hidden = true; last = performance.now(); }
+  }
+  function updateStats() {
+    $('score').textContent = score.toLocaleString('ru-RU');
+    $('lines').textContent = lines; $('level').textContent = level;
+    $('best').textContent = $('best2').textContent = Math.max(best, score).toLocaleString('ru-RU');
+  }
+
+  // ---------- rendering ----------
+  let cell = 24, dpr = 1;
+  function resize() {
+    const wrap = $('wellWrap');
+    const availH = wrap.clientHeight, availW = wrap.clientWidth;
+    cell = Math.max(12, Math.floor(Math.min((availH - 2) / H, (availW - 2) / W)));
+    dpr = window.devicePixelRatio || 1;
+    board.style.width = cell * W + 'px'; board.style.height = cell * H + 'px';
+    board.width = cell * W * dpr; board.height = cell * H * dpr;
+    bctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    overlay.style.width = cell * W + 'px'; overlay.style.height = cell * H + 'px'; overlay.style.bottom = 'auto'; overlay.style.left = '50%'; overlay.style.transform = 'translateX(-50%)';
+    for (const c of [holdC, nextC]) {
+      const w = c.width, h = c.height; c.style.aspectRatio = w + ' / ' + h;
+    }
+    draw();
+  }
+  function block(ctx, x, y, s, color, alpha = 1) {
+    ctx.globalAlpha = alpha;
+    const g = Math.max(1, s * 0.06), r = s * 0.18;
+    ctx.fillStyle = color;
+    ctx.beginPath(); ctx.roundRect(x + g, y + g, s - 2 * g, s - 2 * g, r); ctx.fill();
+    ctx.globalAlpha = alpha * 0.28; ctx.fillStyle = '#ffffff';
+    ctx.beginPath(); ctx.roundRect(x + s * 0.2, y + s * 0.16, s * 0.6, s * 0.16, s * 0.08); ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+  function ghostY() { let y = piece.y; while (!collides(piece, piece.m, piece.x, y + 1)) y++; return y; }
+  function draw() {
+    if (!grid) return;
+    const s = cell;
+    bctx.fillStyle = colors.well; bctx.fillRect(0, 0, W * s, H * s);
+    bctx.strokeStyle = colors.grid; bctx.lineWidth = 1;
+    bctx.beginPath();
+    for (let x = 1; x < W; x++) { bctx.moveTo(x * s + .5, 0); bctx.lineTo(x * s + .5, H * s); }
+    for (let y = 1; y < H; y++) { bctx.moveTo(0, y * s + .5); bctx.lineTo(W * s, y * s + .5); }
+    bctx.stroke();
+    for (let y = HIDDEN; y < H + HIDDEN; y++) for (let x = 0; x < W; x++) {
+      const t = grid[y][x]; if (!t) continue;
+      const flashing = clearing && clearing.rows.includes(y);
+      if (flashing) {
+        const k = clearing.t / 220;
+        block(bctx, x * s, (y - HIDDEN) * s, s, colors.fg, 1 - k * 0.8);
+      } else block(bctx, x * s, (y - HIDDEN) * s, s, colors[t], state === 'idle' ? 0.55 : 1);
+    }
+    if (piece && state !== 'idle') {
+      const gy = ghostY();
+      bctx.strokeStyle = colors[piece.type]; bctx.lineWidth = Math.max(1.5, s * 0.07);
+      piece.m.forEach((row, r) => row.forEach((v, c) => {
+        if (!v) return;
+        const yy = (gy + r - HIDDEN) * s; if (yy < 0) return;
+        bctx.globalAlpha = 0.55;
+        bctx.beginPath(); bctx.roundRect((piece.x + c) * s + s * .14, yy + s * .14, s * .72, s * .72, s * .16); bctx.stroke();
+        bctx.globalAlpha = 1;
+      }));
+      piece.m.forEach((row, r) => row.forEach((v, c) => {
+        if (!v) return;
+        const yy = (piece.y + r - HIDDEN) * s; if (yy < -s + 1) return;
+        block(bctx, (piece.x + c) * s, yy, s, colors[piece.type]);
+      }));
+    }
+  }
+  function drawMini(ctx, type, cx, cy, s, alpha = 1) {
+    const m = SHAPES[type];
+    let minx = 9, maxx = -1, miny = 9, maxy = -1;
+    m.forEach((row, r) => row.forEach((v, c) => { if (v) { minx = Math.min(minx, c); maxx = Math.max(maxx, c); miny = Math.min(miny, r); maxy = Math.max(maxy, r); } }));
+    const w = (maxx - minx + 1) * s, h = (maxy - miny + 1) * s;
+    m.forEach((row, r) => row.forEach((v, c) => {
+      if (v) block(ctx, cx - w / 2 + (c - minx) * s, cy - h / 2 + (r - miny) * s, s, colors[type], alpha);
+    }));
+  }
+  function prepMini(c, ctx) {
+    const d = window.devicePixelRatio || 1;
+    if (!c.dataset.w) { c.dataset.w = c.width; c.dataset.h = c.height; }
+    const bw = +c.dataset.w, bh = +c.dataset.h;
+    if (c.width !== bw * d) { c.width = bw * d; c.height = bh * d; }
+    ctx.setTransform(d, 0, 0, d, 0, 0); ctx.clearRect(0, 0, bw, bh);
+    return [bw, bh];
+  }
+  function drawSide() {
+    const [hw, hh] = prepMini(holdC, hctx);
+    if (holdType) drawMini(hctx, holdType, hw / 2, hh / 2, 22, canHold ? 1 : 0.35);
+    const [nw] = prepMini(nextC, nctx);
+    if (queue) queue.slice(0, 4).forEach((t, i) => drawMini(nctx, t, nw / 2, 34 + i * 58, i === 0 ? 22 : 17));
+  }
+
+  // ---------- loop ----------
+  function tick(now) {
+    const dt = Math.min(100, now - (last || now)); last = now;
+    if (state === 'play') {
+      handleRepeat(dt);
+      if (clearing) { clearing.t += dt; if (clearing.t >= 220) finishClear(); }
+      else if (piece) {
+        if (onGround()) { lockTimer += dt; if (lockTimer >= 500) lock(); }
+        else {
+          lockTimer = 0; dropTimer += dt;
+          const g = softHeld ? Math.min(gravityMs(), 40) : gravityMs();
+          while (dropTimer >= g && !onGround()) { dropTimer -= g; piece.y++; if (softHeld) { score++; updateStats(); } }
+        }
+      }
+    }
+    draw();
+    requestAnimationFrame(tick);
+  }
+
+  // ---------- input ----------
+  const DAS = 150, ARR = 40;
+  let held = { left: false, right: false }, dir = 0, dasT = 0, arrT = 0, softHeld = false;
+  function pressDir(d) { dir = d; dasT = 0; arrT = 0; move(d); }
+  function handleRepeat(dt) {
+    if (!dir) return;
+    dasT += dt;
+    if (dasT >= DAS) { arrT += dt; while (arrT >= ARR) { arrT -= ARR; if (!move(dir)) break; } }
+  }
+  function releaseDir(side) {
+    held[side] = false;
+    dir = held.left ? -1 : held.right ? 1 : 0; dasT = 0; arrT = 0;
+  }
+  document.addEventListener('keydown', (e) => {
+    const k = e.code;
+    if (state !== 'play') {
+      if ((k === 'Enter' || k === 'Space') && document.activeElement !== $('startBtn')) { e.preventDefault(); startOrResume(); }
+      else if ((k === 'KeyP' || k === 'Escape') && state === 'pause') togglePause();
+      return;
+    }
+    const map = ['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Space','KeyX','KeyZ','KeyC','KeyP','Escape','ShiftLeft','ShiftRight','ControlLeft','ControlRight','KeyA','KeyD','KeyS','KeyW'];
+    if (map.includes(k)) e.preventDefault();
+    if (e.repeat && k !== 'ArrowDown') return;
+    switch (k) {
+      case 'ArrowLeft': case 'KeyA': held.left = true; pressDir(-1); break;
+      case 'ArrowRight': case 'KeyD': held.right = true; pressDir(1); break;
+      case 'ArrowUp': case 'KeyX': case 'KeyW': rotate(1); break;
+      case 'KeyZ': case 'ControlLeft': case 'ControlRight': rotate(-1); break;
+      case 'ArrowDown': case 'KeyS': if (!softHeld) { softHeld = true; softDrop(); } break;
+      case 'Space': hardDrop(); break;
+      case 'KeyC': case 'ShiftLeft': case 'ShiftRight': hold(); break;
+      case 'KeyP': case 'Escape': togglePause(); break;
+    }
+  });
+  document.addEventListener('keyup', (e) => {
+    const k = e.code;
+    if (k === 'ArrowLeft' || k === 'KeyA') releaseDir('left');
+    if (k === 'ArrowRight' || k === 'KeyD') releaseDir('right');
+    if (k === 'ArrowDown' || k === 'KeyS') softHeld = false;
+  });
+  window.addEventListener('blur', () => { held = { left: false, right: false }; dir = 0; softHeld = false; if (state === 'play') togglePause(); });
+
+  // touch pad
+  $('pad').addEventListener('pointerdown', (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    e.preventDefault();
+    if (state !== 'play') return;
+    const a = b.dataset.act;
+    if (a === 'left') { held.left = true; pressDir(-1); }
+    else if (a === 'right') { held.right = true; pressDir(1); }
+    else if (a === 'rot') rotate(1);
+    else if (a === 'soft') { softHeld = true; softDrop(); }
+    else if (a === 'drop') hardDrop();
+    else if (a === 'hold') hold();
+    b.setPointerCapture?.(e.pointerId);
+  });
+  const padUp = (e) => {
+    const b = e.target.closest && e.target.closest('button'); if (!b) return;
+    const a = b.dataset.act;
+    if (a === 'left') releaseDir('left');
+    if (a === 'right') releaseDir('right');
+    if (a === 'soft') softHeld = false;
+  };
+  $('pad').addEventListener('pointerup', padUp);
+  $('pad').addEventListener('pointercancel', padUp);
+  $('pad').addEventListener('contextmenu', (e) => e.preventDefault());
+  // tap on the well rotates (phones)
+  board.addEventListener('pointerdown', () => { if (state === 'play') rotate(1); });
+
+  function startOrResume() { if (state === 'pause') togglePause(); else newGame(); }
+  $('startBtn').addEventListener('click', startOrResume);
+
+  // ---------- idle scene (decorative stack behind the start screen) ----------
+  function idleScene() {
+    grid = emptyGrid(); queue = []; bag = [];
+    while (queue.length < 5) queue.push(takeFromBag());
+    holdType = 'T'; canHold = true; score = 0; lines = 0; level = 1; state = 'idle';
+    const rows = [
+      'IIII.LLLOO', 'JJJ..LSSOO', 'TJZZ.SS.TT', 'TTTZZ.OOTT'.replace(/\./g, 'S'), 'ZZSSIIIIJJ'.replace('IIII', 'II.I'),
+    ];
+    rows.reverse().forEach((row, i) => {
+      [...row].forEach((ch, x) => { grid[H + HIDDEN - 1 - i][x] = ch === '.' ? null : ch; });
+    });
+    piece = null; updateStats(); drawSide();
+  }
+
+  // theme changes
+  const reTheme = () => { readColors(); drawSide(); draw(); };
+  matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', reTheme);
+  new MutationObserver(reTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  window.addEventListener('resize', resize);
+  document.fonts?.ready?.then(resize);
+
+  readColors(); idleScene(); resize();
+  requestAnimationFrame(tick);
+})();
+</script>
