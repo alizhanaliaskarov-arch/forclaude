@@ -1,0 +1,6 @@
+{
+  "appId": "com.zvezdopad.game",
+  "appName": "Звездопад",
+  "webDir": "dist",
+  "android": { "backgroundColor": "#0b0e2a" }
+}
