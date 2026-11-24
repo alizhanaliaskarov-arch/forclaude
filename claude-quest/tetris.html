@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Claude Tetris</title>
+<style>
+:root{color-scheme:dark;--bg:#16130f;--panel:#221d17;--panel2:#2c261e;--text:#f2ece4;--mut:#a89f93;--acc:#d97757;--ok:#7bc47f;--bad:#e5645c;--line:#3d352b}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-user-select:none;user-select:none;touch-action:manipulation}
+.wrap{max-width:560px;margin:0 auto;padding:12px 16px 30px}
+h1{margin:0 0 8px;font-size:22px}
+.mut{color:var(--mut)}
+button{font:inherit;color:var(--text);background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 14px;cursor:pointer}
+button.pri{background:var(--acc);border-color:var(--acc);color:#1a1714;font-weight:700}
+.game{display:flex;gap:12px;align-items:flex-start;justify-content:center}
+#cv{height:min(60vh,560px);aspect-ratio:1/2;background:#0f0d0a;border:1px solid var(--line);border-radius:8px;max-width:62vw}
+.side{display:flex;flex-direction:column;gap:8px;min-width:90px}
+.side div.b{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:6px 10px;font-size:12px;color:var(--mut)}
+.side b{display:block;font-size:19px;color:var(--text);font-variant-numeric:tabular-nums}
+#nx{width:80px;height:80px;background:#0f0d0a;border:1px solid var(--line);border-radius:8px}
+.pad{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:12px}
+.pad button{padding:14px 0;font-size:20px}
+.ov{position:fixed;inset:0;background:rgba(10,8,6,.8);display:flex;align-items:center;justify-content:center;padding:16px;z-index:5}
+.ov[hidden]{display:none}
+.box{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px;max-width:520px;width:100%}
+.box h2{margin:0 0 6px;font-size:18px}
+.opts{display:grid;gap:8px;margin-top:12px}
+.opts button{text-align:left}
+.opts .ok{border-color:var(--ok);background:#233322}.opts .bad{border-color:var(--bad);background:#3a2220}
+.fb{margin-top:12px;font-size:15px}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>▦ Claude Tetris</h1>
+<div class="game">
+ <canvas id="cv" width="300" height="600"></canvas>
+ <div class="side">
+  <div class="b">Очки<b id="sc">0</b></div>
+  <div class="b">Линии<b id="ln">0</b></div>
+  <div class="b">Уровень<b id="lv">1</b></div>
+  <div class="b">До вопроса<b id="qq">3</b></div>
+  <canvas id="nx" width="80" height="80"></canvas>
+  <button id="pb">Пауза</button>
+ </div>
+</div>
+<div class="pad">
+ <button id="bl">◀</button><button id="br">▶</button><button id="bd">▼</button><button id="bro">⟳</button><button id="bh">⤓</button>
+</div>
+<p class="mut" style="font-size:13px">← → двигать, ↑ повернуть, ↓ ускорить, Пробел — сбросить вниз, P — пауза. Каждые 3 линии: вопрос. Верно: две нижние линии сгорают и +200. Неверно: снизу вырастает мусорная линия.</p>
+</div>
+<div class="ov" id="ov"><div class="box" id="box"></div></div>
+<script>
+const Q=[
+['Что такое контекстное окно?',['Объём токенов, который модель видит за раз','Окно браузера с чатом','Список сайтов','Размер файла весов'],0,'Всё, что в диалоге (промпт, история, файлы, ответы), должно помещаться в контекстное окно.'],
+['Какая команда создаёт стартовый CLAUDE.md?',['/init','/start','/new','/readme'],0,'/init анализирует проект и создаёт CLAUDE.md с командами сборки и тестов.'],
+['Что делает /compact?',['Сжимает историю в краткое резюме','Удаляет проект','Включает тёмную тему','Закрывает сессию'],0,'/compact освобождает контекст, сохраняя суть разговора.'],
+['Чем /clear отличается от /compact?',['/clear полностью очищает контекст','Это одно и то же','/clear удаляет файлы','/clear меняет модель'],0,'/clear стирает историю. Используйте между несвязанными задачами.'],
+['Как запустить Claude Code без интерактива с одним запросом?',['claude -p "запрос"','claude --off','claude run','claude -x'],0,'Флаг -p (print) печатает ответ и завершается. Удобно для скриптов и CI.'],
+['Как сослаться на файл в запросе?',['@путь/к/файлу','$файл','#файл','&файл'],0,'@src/app.ts добавляет файл в контекст.'],
+['Что делает Shift+Tab в Claude Code?',['Переключает режимы разрешений, включая Plan mode','Закрывает программу','Отправляет сообщение','Меняет тему'],0,'В Plan mode Claude только планирует, без правок.'],
+['Что такое hook?',['Shell-команда, автоматически запускаемая на событии','Тип подписки','Облачное хранилище','Вид токена'],0,'Hook срабатывает гарантированно, например форматтер после каждой правки файла.'],
+['Что такое MCP?',['Протокол подключения внешних инструментов и данных','Формат изображений','Модель Claude','Тарифный план'],0,'Model Context Protocol даёт Claude доступ к GitHub, базам, трекерам и другим системам.'],
+['Зачем субагенты?',['Работают в отдельном контексте и возвращают краткий итог','Для резервных копий','Ускоряют интернет','Заменяют токены'],0,'Исследование не засоряет основной контекст.'],
+['Где хранятся постоянные инструкции для проекта?',['CLAUDE.md','package.json','.gitignore','LICENSE'],0,'CLAUDE.md подгружается в начале каждой сессии.'],
+['Claude уверенно назвал несуществующую функцию. Что это?',['Галлюцинация: нужно проверять результат','Фича','Взлом','Кэш'],0,'Запускайте код и тесты, сверяйтесь с документацией.'],
+['Что помогает получать лучший результат от Claude?',['Конкретная задача, ограничения и критерии результата','Короткое «сделай хорошо»','Капслок','Просьба отвечать быстрее'],0,'Ясный контекст и критерии уменьшают число итераций.'],
+['Как дать Claude способ проверить свою работу?',['Попросить написать и запустить тесты','Поверить на слово','Перезагрузить компьютер','Скрыть ошибки'],0,'Тесты дают объективную обратную связь.'],
+['Какой файл настроек проекта обычно коммитят в git для команды?',['.claude/settings.json','.claude/settings.local.json','~/.bashrc','.env'],0,'settings.local.json личный, settings.json общий.'],
+['Как возобновить последнюю сессию из терминала?',['claude -c','claude --new','claude --reset','claude --old'],0,'Флаг -c (continue) продолжает последний диалог.']
+];
+const C=10,R=20,CS=30;
+const COL=['','#4fc3d9','#e8c84c','#a97bd8','#7bc47f','#e5645c','#5b8def','#e8924c'];
+const SH=[null,[[1,1,1,1]],[[1,1],[1,1]],[[0,1,0],[1,1,1]],[[0,1,1],[1,1,0]],[[1,1,0],[0,1,1]],[[1,0,0],[1,1,1]],[[0,0,1],[1,1,1]]];
+const cv=document.getElementById('cv'),cx=cv.getContext('2d'),nx=document.getElementById('nx').getContext('2d');
+const $=id=>document.getElementById(id);
+let G;
+function bag(){const a=[1,2,3,4,5,6,7];for(let i=6;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a}
+function rot(m){return m[0].map((_,i)=>m.map(r=>r[i]).reverse())}
+function mk(t){const m=SH[t].map(r=>r.slice());return{t,m,x:(C-m[0].length)/2|0,y:0}}
+function next(){if(!G.bag.length)G.bag=bag();return G.bag.pop()}
+function fit(p,m=p.m,x=p.x,y=p.y){for(let r=0;r<m.length;r++)for(let c=0;c<m[r].length;c++)if(m[r][c]){const bx=x+c,by=y+r;if(bx<0||bx>=C||by>=R||(by>=0&&G.b[by][bx]))return false}return true}
+function newGame(){
+  G={b:Array.from({length:R},()=>Array(C).fill(0)),bag:[],score:0,lines:0,level:1,q:3,over:false,paused:false,asking:false,acc:0,last:performance.now()};
+  G.nextT=next();spawn();upd();$('ov').hidden=true;
+}
+function spawn(){G.p=mk(G.nextT);G.nextT=next();if(!fit(G.p)){G.over=true;showEnd()}}
+function move(dx,dy){if(!canPlay())return false;if(fit(G.p,G.p.m,G.p.x+dx,G.p.y+dy)){G.p.x+=dx;G.p.y+=dy;return true}return false}
+function canPlay(){return G&&!G.over&&!G.paused&&!G.asking}
+function turn(){if(!canPlay())return;const m=rot(G.p.m);for(const k of[0,-1,1,-2,2])if(fit(G.p,m,G.p.x+k,G.p.y)){G.p.m=m;G.p.x+=k;return}}
+function drop(){if(!move(0,1))lock()}
+function hard(){if(!canPlay())return;let n=0;while(fit(G.p,G.p.m,G.p.x,G.p.y+1)){G.p.y++;n++}G.score+=n*2;lock()}
+function lock(){
+  G.p.m.forEach((row,r)=>row.forEach((v,c)=>{if(v&&G.p.y+r>=0)G.b[G.p.y+r][G.p.x+c]=G.p.t}));
+  let n=0;for(let r=R-1;r>=0;r--)if(G.b[r].every(v=>v)){G.b.splice(r,1);G.b.unshift(Array(C).fill(0));n++;r++}
+  if(n){G.score+=[0,100,300,500,800][n]*G.level;G.lines+=n;G.level=1+(G.lines/10|0);G.q-=n}
+  spawn();upd();
+  if(G.q<=0&&!G.over){G.q+=3;ask()}
+}
+function upd(){$('sc').textContent=G.score;$('ln').textContent=G.lines;$('lv').textContent=G.level;$('qq').textContent=Math.max(G.q,0);
+  nx.clearRect(0,0,80,80);const m=SH[G.nextT],s=18,ox=(80-m[0].length*s)/2,oy=(80-m.length*s)/2;
+  m.forEach((row,r)=>row.forEach((v,c)=>{if(v){nx.fillStyle=COL[G.nextT];nx.fillRect(ox+c*s+1,oy+r*s+1,s-2,s-2)}}))}
+function ask(){
+  G.asking=true;const q=Q[Math.random()*Q.length|0];
+  const o=q[1].map((t,i)=>({t,c:i===q[2]}));for(let i=3;i>0;i--){const j=Math.random()*(i+1)|0;[o[i],o[j]]=[o[j],o[i]]}
+  $('box').innerHTML=`<h2>Вопрос: ${q[0]}</h2><div class="opts" id="o"></div><div class="fb" id="fb"></div>`;
+  o.forEach(x=>{const b=document.createElement('button');b.textContent=x.t;b.onclick=()=>{
+    [...$('o').children].forEach((e,i)=>{e.disabled=true;if(o[i].c)e.classList.add('ok')});
+    if(!x.c)b.classList.add('bad');
+    if(x.c){for(let k=0;k<2;k++){G.b.pop();G.b.unshift(Array(C).fill(0))}G.score+=200}
+    else{G.b.shift();const row=Array(C).fill(8);row[Math.random()*C|0]=0;G.b.push(row)}
+    $('fb').innerHTML=`<b>${x.c?'✅ Верно! Две нижние линии сгорели, +200.':'❌ Неверно. Снизу выросла мусорная линия.'}</b><br>${q[3]}<div style="margin-top:10px"><button class="pri" id="go">Продолжить</button></div>`;
+    $('go').onclick=()=>{$('ov').hidden=true;G.asking=false;if(!fit(G.p)){G.over=true;showEnd()}G.last=performance.now();upd()};$('go').focus();
+  };$('o').appendChild(b)});
+  $('ov').hidden=false;
+}
+function showEnd(){
+  let best=0;try{best=+localStorage.getItem('ctBest')||0;if(G.score>best){best=G.score;localStorage.setItem('ctBest',best)}}catch(e){}
+  $('box').innerHTML=`<h2>Игра окончена</h2><p>Очки: <b>${G.score}</b> · линии: ${G.lines}<br><span class="mut">Рекорд: ${best}</span></p><button class="pri" id="again">Играть снова</button>`;
+  $('ov').hidden=false;$('again').onclick=newGame;
+}
+function cell(c,x,y,col,a=1){c.globalAlpha=a;c.fillStyle=col;c.fillRect(x*CS+1,y*CS+1,CS-2,CS-2);c.globalAlpha=1}
+function draw(){
+  cx.clearRect(0,0,300,600);
+  cx.strokeStyle='#221d17';cx.lineWidth=1;for(let i=1;i<C;i++){cx.beginPath();cx.moveTo(i*CS,0);cx.lineTo(i*CS,600);cx.stroke()}for(let i=1;i<R;i++){cx.beginPath();cx.moveTo(0,i*CS);cx.lineTo(300,i*CS);cx.stroke()}
+  G.b.forEach((row,y)=>row.forEach((v,x)=>{if(v)cell(cx,x,y,v===8?'#6b6258':COL[v])}));
+  if(!G.over){let gy=G.p.y;while(fit(G.p,G.p.m,G.p.x,gy+1))gy++;
+    G.p.m.forEach((row,r)=>row.forEach((v,c)=>{if(v){cell(cx,G.p.x+c,gy+r,COL[G.p.t],.2);cell(cx,G.p.x+c,G.p.y+r,COL[G.p.t])}}))}
+}
+function loop(now){
+  const dt=now-G.last;G.last=now;
+  if(canPlay()){G.acc+=dt;const sp=Math.max(80,800-(G.level-1)*70);while(G.acc>=sp){G.acc-=sp;if(!canPlay())break;drop()}}
+  draw();requestAnimationFrame(loop);
+}
+function pause(){if(!G||G.over||G.asking)return;G.paused=!G.paused;$('pb').textContent=G.paused?'Продолжить':'Пауза'}
+$('pb').onclick=pause;
+addEventListener('keydown',e=>{
+  const k=e.key;
+  if(['ArrowLeft','ArrowRight','ArrowDown','ArrowUp',' '].includes(k))e.preventDefault();
+  if(k==='ArrowLeft'||k==='a')move(-1,0);else if(k==='ArrowRight'||k==='d')move(1,0);
+  else if(k==='ArrowDown'||k==='s'){if(canPlay()){drop();G.score+=1}}
+  else if(k==='ArrowUp'||k==='w')turn();else if(k===' ')hard();else if(k==='p'||k==='P')pause();
+});
+function hold(id,fn){const b=$(id);let t;b.addEventListener('pointerdown',e=>{e.preventDefault();fn();clearInterval(t);t=setInterval(fn,110)});['pointerup','pointerleave','pointercancel'].forEach(ev=>b.addEventListener(ev,()=>clearInterval(t)))}
+hold('bl',()=>move(-1,0));hold('br',()=>move(1,0));hold('bd',()=>{if(canPlay()){drop();G.score+=1}});
+$('bro').onclick=turn;$('bh').onclick=hard;
+$('box').innerHTML='<h2>Claude Tetris</h2><p class="mut">Складывайте линии. Каждые 3 линии вас ждёт вопрос про Claude и Claude Code.</p><button class="pri" id="st">▶ Играть</button>';
+G={b:Array.from({length:R},()=>Array(C).fill(0)),bag:[],score:0,lines:0,level:1,q:3,over:true,paused:false,asking:false,acc:0,last:performance.now()};
+G.nextT=1;G.p=mk(1);
+$('st').onclick=newGame;
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

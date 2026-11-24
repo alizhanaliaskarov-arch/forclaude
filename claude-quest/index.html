@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Claude Quest</title>
+<style>
+:root{color-scheme:dark;--bg:#16130f;--panel:#221d17;--panel2:#2c261e;--text:#f2ece4;--mut:#a89f93;--acc:#d97757;--ok:#7bc47f;--bad:#e5645c;--warn:#e8b64c;--line:#3d352b}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:16px/1.45 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;-webkit-user-select:none;user-select:none;touch-action:manipulation}
+.wrap{max-width:820px;margin:0 auto;padding:14px 16px 40px}
+.mono{font-family:ui-monospace,Menlo,Consolas,monospace}
+h1{margin:0;font-size:26px}h2{margin:0 0 6px}
+.mut{color:var(--mut)}
+button{font:inherit;color:var(--text);background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px 14px;cursor:pointer}
+button:hover:not(:disabled){border-color:var(--acc)}
+button:disabled{opacity:.4;cursor:default}
+button.pri{background:var(--acc);border-color:var(--acc);color:#1a1714;font-weight:700}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px}
+.hud{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px}
+.hud div{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:6px 10px;font-size:13px;color:var(--mut)}
+.hud b{display:block;font-size:20px;color:var(--text);font-variant-numeric:tabular-nums}
+.ctxbar{height:14px;background:var(--panel2);border-radius:8px;overflow:hidden;border:1px solid var(--line)}
+.ctxbar i{display:block;height:100%;width:0;background:var(--ok);transition:background .3s}
+.ctxlbl{display:flex;justify-content:space-between;font-size:13px;color:var(--mut);margin:8px 0 4px}
+#board{display:grid;gap:8px;margin:12px 0;min-height:290px;align-content:start}
+.ticket{position:relative;background:var(--panel);border:2px solid var(--line);border-radius:12px;padding:10px 12px 14px;cursor:pointer;overflow:hidden;animation:in .25s}
+.ticket.sel{border-color:var(--acc);background:var(--panel2)}
+.ticket.boss{border-color:var(--bad)}
+.ticket .tag{font-size:12px;color:var(--mut);text-transform:uppercase;letter-spacing:.06em}
+.ticket .txt{transition:filter .3s}
+.fog .ticket:not(.sel) .txt{filter:blur(2.2px)}
+.ticket .tm{position:absolute;left:0;bottom:0;height:5px;background:var(--ok);width:100%}
+.steps{display:flex;gap:6px;margin-top:6px}.steps span{font-size:12px;padding:1px 8px;border-radius:99px;border:1px solid var(--line);color:var(--mut)}
+.steps span.d{background:#233322;border-color:var(--ok);color:var(--ok)}
+@keyframes in{from{opacity:0;transform:translateY(-8px)}}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.shake{animation:shake .22s}
+.cards{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.cards button{display:flex;flex-direction:column;gap:2px;text-align:left;padding:8px 10px;min-height:76px}
+.cards .n{font-size:12px;color:var(--mut)}.cards .t{font-weight:600;font-size:15px}.cards .h{font-size:11.5px;color:var(--mut);line-height:1.25}
+.expert .cards .h{visibility:hidden}
+.util{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+#log{margin-top:12px;min-height:64px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--panel);font-size:14px}
+#log.ok{border-color:var(--ok)}#log.bad{border-color:var(--bad)}
+.row{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px;align-items:center}
+.big{font-size:54px;text-align:center}
+.legend{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px;font-size:14px;margin:10px 0;padding:0;list-style:none}
+@media(max-width:560px){.cards{grid-template-columns:repeat(2,1fr)}.legend{grid-template-columns:1fr}.hud b{font-size:17px}}
+</style>
+</head>
+<body>
+<div class="wrap" id="app"></div>
+<script>
+const CARDS={
+ plan:{k:'1',ico:'📋',n:'Plan mode',h:'Большое или рискованное: сначала план'},
+ file:{k:'2',ico:'📎',n:'@файл',h:'Знаешь файл: укажи точно'},
+ sub:{k:'3',ico:'🤖',n:'Субагент',h:'Поиск и обзор в отдельном контексте'},
+ hook:{k:'4',ico:'🪝',n:'Hook',h:'Автоматика, которая сработает всегда'},
+ mcp:{k:'5',ico:'🔌',n:'MCP',h:'Данные из внешних систем'},
+ md:{k:'6',ico:'📝',n:'CLAUDE.md',h:'Правила, которые нужны в каждой сессии'},
+ test:{k:'7',ico:'✅',n:'Тесты',h:'Дай Claude способ проверить себя'},
+ skill:{k:'8',ico:'🧩',n:'Skill / команда',h:'Повторяемый процесс по рецепту'}
+};
+const TICKETS=[
+ ['plan','Переписать авторизацию во всём проекте','Крупное изменение в нескольких файлах: в Plan mode Claude только исследует и предлагает план, без правок. Вы одобряете, и только потом идёт код.'],
+ ['plan','Миграция БД на проде, можно потерять данные','Рискованные действия сначала обсуждают в Plan mode (Shift+Tab), пока ничего не изменено.'],
+ ['file','Баг в src/payments/refund.ts: округление суммы','Когда файл известен, @src/payments/refund.ts сразу даёт нужный код. Не нужно искать по всему репозиторию.'],
+ ['file','Поменять текст кнопки в components/Header.tsx','Простая точечная задача: ссылка @файл и короткая просьба.'],
+ ['sub','Найти все места со старым API среди 2000 файлов','Субагент ищет в своём контексте и возвращает короткий итог. Основной контекст не раздувается.'],
+ ['sub','Параллельно проверить PR на безопасность и скорость','Субагенты работают независимо, у каждого своя специализация и свой контекст.'],
+ ['hook','После каждой правки должен запускаться prettier','Hook выполняется автоматически на событии (например, PostToolUse). Просьба в промпте этого не гарантирует.'],
+ ['hook','Запретить Claude менять файл .env','Hook на PreToolUse может заблокировать действие до выполнения. Правило, а не просьба.'],
+ ['mcp','Нужны задачи из GitHub и ошибки из Sentry','MCP-серверы подключают Claude к внешним системам: трекеры, базы, мониторинг.'],
+ ['mcp','Сверстать экран по макету из Figma','Макет лежит во внешнем сервисе. Для доступа подключают MCP-сервер.'],
+ ['md','Claude забывает, что тесты запускаются через pnpm test','Постоянные факты о проекте кладут в CLAUDE.md. Он подгружается в каждую сессию.'],
+ ['md','Вся команда пишет в camelCase и с отступом 2 пробела','Соглашения по стилю: CLAUDE.md в корне проекта, коммитится в git для всех.'],
+ ['test','Фикс готов, но вдруг что-то сломалось?','Запуск тестов даёт Claude (и вам) объективную проверку. Результат резко лучше, когда он может сам себя проверить.'],
+ ['test','Баг воспроизводится нестабильно, Claude правит вслепую','Сначала падающий тест, который воспроизводит баг. Правка считается готовой, когда тест зелёный.'],
+ ['skill','Релиз из 8 шагов, повторяется каждую неделю','Повторяемый процесс оформляют как skill (SKILL.md) или команду в .claude/commands/ и вызывают одним словом.'],
+ ['skill','Каждый PR просим проверять по одному чек-листу','Чек-лист оформляют как skill или слэш-команду, чтобы не вставлять его каждый раз.']
+];
+const BOSS={text:'КРИТИЧЕСКИЙ БАГ В ПРОДЕ: файл неизвестен, затронуто много модулей, ошибка опасная',need:['sub','plan','test'],
+ why:['Сначала субагент ищет источник ошибки и возвращает краткий итог.','Затем Plan mode: исправление обсуждается до правок.','В конце тесты подтверждают, что баг исправлен.']};
+const RANKS=[[0,'Стажёр 🐣'],[1200,'Джун с Claude 📘'],[2200,'Мидл-агентник 💻'],[3000,'Сеньор Claude Code ⚡'],[3600,'Архитектор агентов 🏆']];
+
+const $=document.getElementById('app');
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.random()*(i+1)|0;[a[i],a[j]]=[a[j],a[i]]}return a};
+let best=0,expert=false;
+try{best=+localStorage.getItem('cqBest')||0;expert=localStorage.getItem('cqExpert')==='1'}catch(e){}
+let G=null,raf=0;
+
+function intro(){
+  cancelAnimationFrame(raf);G=null;
+  $.innerHTML=`<h1>✺ Claude Quest</h1><p class="mut">Игра на скорость и внимание. Вы ведёте проект с Claude Code.</p>
+  <div class="card"><h2>Правила</h2>
+  <p>Тикеты падают на доску, у каждого горит таймер. Выберите тикет и сыграйте подходящую карту. Неверная карта забивает контекст и сбивает серию.</p>
+  <p><b>Контекст</b> заполняется с каждым действием. После 75% текст тикетов расплывается, после 90% Claude может «потерять нить». При 100% вы теряете жизнь. Сбросьте контекст командой <b class="mono">/compact</b> (−45%, кулдаун 8 с) или <b class="mono">/clear</b> (в ноль, но серия сгорает, кулдаун 12 с).</p>
+  <p>Субагент ничего не стоит по контексту, поэтому полезно знать, когда он подходит. В конце вас ждёт босс из трёх шагов.</p>
+  <ul class="legend">${Object.values(CARDS).map(c=>`<li>${c.ico} <b>${c.n}</b><br><span class="mut">${c.h}</span></li>`).join('')}</ul>
+  <p class="mut" style="font-size:14px">Клавиши: 1–8 карты, C /compact, X /clear, Пробел или Tab — следующий тикет.</p>
+  <label class="mut" style="display:block;margin:10px 0"><input type="checkbox" id="ex" ${expert?'checked':''}> Режим эксперта (скрыть подсказки на картах)</label>
+  <div class="row"><button class="pri" id="go">▶ Играть</button><span class="mut">Рекорд: <b>${best}</b></span></div></div>`;
+  document.getElementById('ex').onchange=e=>{expert=e.target.checked;try{localStorage.setItem('cqExpert',expert?'1':'0')}catch(_){}};
+  document.getElementById('go').onclick=start;
+}
+
+function start(){
+  G={ctx:0,hp:5,score:0,combo:0,maxCombo:0,done:0,total:15,t:0,spawn:1.2,list:[],sel:null,
+     queue:shuffle(TICKETS).slice(0,15),bossOut:false,cdC:0,cdX:0,uid:0,over:false,last:performance.now(),correct:0,wrong:0};
+  $.innerHTML=`<div class="hud"><div>Очки<b id="sc">0</b></div><div>Серия<b id="cb">0</b></div><div>Жизни<b id="hp"></b></div><div>Прогресс<b id="pr"></b></div></div>
+   <div class="ctxlbl"><span>Контекст</span><span id="cp">0%</span></div><div class="ctxbar"><i id="cx"></i></div>
+   <div id="board"></div>
+   <div class="cards ${expert?'expert':''}" id="cards">${Object.entries(CARDS).map(([id,c])=>`<button data-c="${id}"><span class="n">[${c.k}]</span><span class="t">${c.ico} ${c.n}</span><span class="h">${c.h}</span></button>`).join('')}</div>
+   <div class="util"><button id="bC" class="mono">/compact</button><button id="bX" class="mono">/clear</button></div>
+   <div id="log" class="mut">Выберите тикет и сыграйте карту.</div>
+   <div class="row"><button id="q">Выйти</button></div>`;
+  document.getElementById('cards').onclick=e=>{const b=e.target.closest('button');if(b)play(b.dataset.c)};
+  document.getElementById('bC').onclick=compact;document.getElementById('bX').onclick=clr;
+  document.getElementById('q').onclick=intro;
+  raf=requestAnimationFrame(loop);hud();
+}
+
+function log(html,cls){const l=document.getElementById('log');if(!l)return;l.className=cls||'';l.innerHTML=html}
+function spawnTicket(){
+  let tk;
+  if(G.done>=G.total-0&&!G.bossOut&&!G.list.length){G.bossOut=true;tk={boss:true,text:BOSS.text,need:BOSS.need,step:0,ttl:48}}
+  else if(G.queue.length&&G.done+G.list.length<G.total){const [need,text,why]=G.queue.pop();const w=Math.min(2,G.done/5|0);tk={need,text,why,ttl:17-w*2.5}}
+  else return;
+  tk.id=++G.uid;tk.left=tk.ttl;G.list.push(tk);if(!G.sel)G.sel=tk.id;drawBoard();
+}
+function drawBoard(){
+  const b=document.getElementById('board');if(!b)return;
+  if(!G.list.find(t=>t.id===G.sel))G.sel=G.list.length?G.list[0].id:null;
+  b.innerHTML='';
+  G.list.forEach(t=>{
+    const d=document.createElement('div');d.className='ticket'+(t.boss?' boss':'')+(t.id===G.sel?' sel':'');d.dataset.id=t.id;
+    d.innerHTML=`<div class="tag">${t.boss?'👹 Босс':'Тикет'}</div><div class="txt">${esc(t.text)}</div>`+(t.boss?`<div class="steps">${t.need.map((_,i)=>`<span class="${i<t.step?'d':''}">шаг ${i+1}</span>`).join('')}</div>`:'')+'<div class="tm"></div>';
+    d.onclick=()=>{G.sel=t.id;drawBoard()};
+    b.appendChild(d);t.el=d;
+  });
+  b.classList.toggle('fog',G.ctx>=75);
+}
+function hud(){
+  const s=id=>document.getElementById(id);if(!s('sc'))return;
+  s('sc').textContent=G.score;s('cb').textContent=G.combo>1?'x'+G.combo:'—';
+  s('hp').textContent='❤️'.repeat(G.hp)+'🖤'.repeat(5-G.hp);
+  s('pr').textContent=Math.min(G.done,G.total)+'/'+G.total+(G.done>=G.total?' 👹':'');
+  const c=Math.round(G.ctx);s('cp').textContent=c+'%';
+  const x=s('cx');x.style.width=c+'%';x.style.background=c>=90?'var(--bad)':c>=75?'var(--warn)':'var(--ok)';
+  document.getElementById('board').classList.toggle('fog',G.ctx>=75);
+  const bC=s('bC'),bX=s('bX');
+  bC.textContent=G.cdC>0?`/compact (${Math.ceil(G.cdC)}с)`:'/compact';bC.disabled=G.cdC>0;
+  bX.textContent=G.cdX>0?`/clear (${Math.ceil(G.cdX)}с)`:'/clear';bX.disabled=G.cdX>0;
+}
+function addCtx(v){
+  G.ctx=Math.max(0,G.ctx+v);
+  if(G.ctx>=100){G.hp--;G.ctx=65;G.combo=0;log('💥 <b>Контекст переполнен.</b> Claude потерял нить, −1 жизнь. Сжимайте контекст заранее.','bad');if(G.hp<=0)end(false)}
+}
+function play(card){
+  if(!G||G.over)return;
+  const t=G.list.find(x=>x.id===G.sel);if(!t)return;
+  if(G.ctx>=90&&Math.random()<0.3){addCtx(3);log('🌫 Контекст почти заполнен: Claude <b>потерял нить</b> и проигнорировал карту. Сожмите контекст.','bad');hud();return}
+  const need=t.boss?t.need[t.step]:t.need;
+  if(card===need){
+    G.correct++;G.combo++;G.maxCombo=Math.max(G.maxCombo,G.combo);
+    addCtx(card==='sub'?0:t.boss?6:8);
+    if(G.over)return;
+    const pts=100+Math.min(G.combo-1,5)*20+Math.round(t.left/t.ttl*50);G.score+=pts;
+    const why=t.boss?BOSS.why[t.step]:t.why;
+    log(`✅ <b>${CARDS[card].n}</b> +${pts}. ${esc(why)}${card==='sub'?' <span class="mut">(субагент: контекст не тронут)</span>':''}`,'ok');
+    if(t.boss&&t.step<t.need.length-1){t.step++;t.left=t.ttl;drawBoard()}
+    else{G.list=G.list.filter(x=>x!==t);G.done++;if(t.boss)return end(true);drawBoard()}
+  }else{
+    G.wrong++;G.combo=0;t.left-=2.5;addCtx(12);
+    t.el&&(t.el.classList.remove('shake'),void t.el.offsetWidth,t.el.classList.add('shake'));
+    if(!G.over)log(`❌ <b>${CARDS[card].n}</b> тут не подходит: ${CARDS[card].h.toLowerCase()}. −2.5 с и +12% контекста.`,'bad');
+  }
+  hud();
+}
+function compact(){if(!G||G.over||G.cdC>0)return;G.ctx=Math.max(0,G.ctx-45);G.cdC=8;log('🗜 <b>/compact</b>: история сжата в резюме, −45% контекста.','ok');hud();drawBoard()}
+function clr(){if(!G||G.over||G.cdX>0)return;G.ctx=0;G.combo=0;G.cdX=12;log('🧹 <b>/clear</b>: контекст пуст, но серия потеряна. Подходит между разными задачами.','ok');hud();drawBoard()}
+
+function loop(now){
+  if(!G||G.over)return;
+  const dt=Math.min(.1,(now-G.last)/1000);G.last=now;G.t+=dt;
+  G.cdC=Math.max(0,G.cdC-dt);G.cdX=Math.max(0,G.cdX-dt);
+  G.spawn-=dt;
+  const cap=G.bossOut?1:4;
+  if(G.spawn<=0&&G.list.length<cap){spawnTicket();G.spawn=Math.max(2.4,5-G.done*.18)}
+  if(G.done>=G.total&&!G.bossOut&&!G.list.length)spawnTicket();
+  let lost=false;
+  for(const t of G.list){
+    t.left-=dt;
+    if(t.el){const tm=t.el.lastElementChild;const r=Math.max(0,t.left/t.ttl);tm.style.width=r*100+'%';tm.style.background=r<.3?'var(--bad)':r<.6?'var(--warn)':'var(--ok)'}
+    if(t.left<=0)lost=true;
+  }
+  if(lost){
+    const ex=G.list.filter(t=>t.left<=0);G.list=G.list.filter(t=>t.left>0);
+    G.hp-=ex.length;G.combo=0;G.done+=ex.filter(t=>!t.boss).length;
+    log(`⏰ Тикет просрочен: <b>−1 жизнь</b>. Читайте условие и выбирайте быстро.`,'bad');
+    if(ex.some(t=>t.boss)||G.hp<=0){hud();return end(false)}
+    drawBoard();
+  }
+  hud();
+  raf=requestAnimationFrame(loop);
+}
+
+function end(win){
+  G.over=true;cancelAnimationFrame(raf);
+  const bonus=win?G.hp*100:0;const total=G.score+bonus;
+  const rk=RANKS.filter(r=>total>=r[0]).pop()[1];
+  const nb=total>best;if(nb){best=total;try{localStorage.setItem('cqBest',best)}catch(e){}}
+  const acc=G.correct+G.wrong?Math.round(G.correct/(G.correct+G.wrong)*100):0;
+  $.innerHTML=`<div class="card"><div class="big">${win?'🏆':'💀'}</div><h2 style="text-align:center">${win?'Босс побеждён, релиз выпущен!':'Прод упал'}</h2>
+   <p style="text-align:center" class="mut">${win?'Вы разобрались с задачами и не дали контексту раздуться.':'Таймеры или контекст оказались сильнее. Попробуйте ещё раз.'}</p>
+   <p style="text-align:center;font-size:22px;margin:8px 0"><b>${total}</b> очков${nb?' · 🎉 новый рекорд':''}</p>
+   <p style="text-align:center">${rk}<br><span class="mut">Точность ${acc}% · лучшая серия x${G.maxCombo}${win?` · бонус за жизни +${bonus}`:''}</span></p>
+   <div class="row" style="justify-content:center"><button class="pri" id="a">Играть снова</button><button id="m">Правила</button></div></div>`;
+  document.getElementById('a').onclick=start;document.getElementById('m').onclick=intro;
+}
+
+addEventListener('keydown',e=>{
+  if(!G||G.over)return;
+  const k=e.key.toLowerCase();
+  const c=Object.entries(CARDS).find(([,v])=>v.k===k);
+  if(c)return play(c[0]);
+  if(k==='c')return compact();if(k==='x')return clr();
+  if(k===' '||k==='tab'){e.preventDefault();const i=G.list.findIndex(t=>t.id===G.sel);if(G.list.length){G.sel=G.list[(i+1)%G.list.length].id;drawBoard()}}
+});
+intro();
+</script>
+</body>
+</html>
