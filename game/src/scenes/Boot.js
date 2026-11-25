@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { loadBest } from '../storage.js';
+import { W, H } from '../layout.js';
 
 // Генерирует все текстуры кодом, затем открывает меню.
 export class Boot extends Phaser.Scene {
@@ -67,8 +68,8 @@ export function addStarfield(scene) {
   const layers = [];
   for (const [count, speed, alpha, scale] of [[60, 40, 0.35, 0.25], [35, 90, 0.6, 0.4], [15, 160, 0.9, 0.55]]) {
     for (let i = 0; i < count; i++) {
-      const s = scene.add.image(Phaser.Math.Between(0, 720), Phaser.Math.Between(0, 1280), 'dot')
-        .setAlpha(alpha).setScale(scale).setDepth(-10);
+      const s = scene.add.image(Phaser.Math.Between(0, W), Phaser.Math.Between(0, H), 'dot')
+        .setAlpha(alpha).setScale(scale).setDepth(-10).setScrollFactor(0);
       s.speed = speed;
       layers.push(s);
     }
@@ -77,7 +78,7 @@ export function addStarfield(scene) {
     const mul = scene.starSpeedMul || 1;
     for (const s of layers) {
       s.y += (s.speed * mul * dt) / 1000;
-      if (s.y > 1290) { s.y = -10; s.x = Phaser.Math.Between(0, 720); }
+      if (s.y > H + 10) { s.y = -10; s.x = Phaser.Math.Between(0, W); }
     }
   });
 }

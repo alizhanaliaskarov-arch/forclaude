@@ -3,7 +3,9 @@ import { addStarfield, FONT } from './Boot.js';
 import { getBest, saveBest } from '../storage.js';
 import { sfx } from '../audio.js';
 
-const W = 720, H = 1280, SHIP_Y = 1100;
+import { W, H, SAFE_TOP, SAFE_BOTTOM } from '../layout.js';
+
+const SHIP_Y = H - 180 - SAFE_BOTTOM;
 
 export class Play extends Phaser.Scene {
   constructor() { super('Play'); }
@@ -38,10 +40,10 @@ export class Play extends Phaser.Scene {
     });
 
     // HUD
-    this.scoreText = this.add.text(30, 30, '0', { ...FONT, fontSize: '64px', fontStyle: '900' }).setDepth(10);
-    this.bestText = this.add.text(32, 104, `Рекорд: ${getBest()}`, { ...FONT, fontSize: '26px', color: '#7f8bc4' }).setDepth(10);
-    this.hearts = [0, 1, 2].map(i => this.add.image(W - 50 - i * 58, 62, 'heart').setDepth(10));
-    this.comboText = this.add.text(W / 2, 200, '', { ...FONT, fontSize: '44px', fontStyle: '800', color: '#ffe066' }).setOrigin(0.5).setDepth(10);
+    this.scoreText = this.add.text(30, 30 + SAFE_TOP, '0', { ...FONT, fontSize: '64px', fontStyle: '900' }).setDepth(10);
+    this.bestText = this.add.text(32, 104 + SAFE_TOP, `Рекорд: ${getBest()}`, { ...FONT, fontSize: '26px', color: '#7f8bc4' }).setDepth(10);
+    this.hearts = [0, 1, 2].map(i => this.add.image(W - 50 - i * 58, 62 + SAFE_TOP, 'heart').setDepth(10));
+    this.comboText = this.add.text(W / 2, 200 + SAFE_TOP, '', { ...FONT, fontSize: '44px', fontStyle: '800', color: '#ffe066' }).setOrigin(0.5).setDepth(10);
 
     // Управление: палец/мышь, а также стрелки на ПК
     this.input.on('pointerdown', p => { this.targetX = p.x; });

@@ -1,12 +1,14 @@
 import Phaser from 'phaser';
 import { addStarfield, FONT } from './Boot.js';
 import { sfx } from '../audio.js';
+import { DY } from '../layout.js';
 
 export class GameOver extends Phaser.Scene {
   constructor() { super('GameOver'); }
 
   create({ score = 0, best = 0, record = false }) {
     addStarfield(this);
+    this.cameras.main.setScroll(0, -DY);
     this.add.text(360, 320, 'ИГРА ОКОНЧЕНА', { ...FONT, fontSize: '72px', fontStyle: '900', color: '#ff4d6d' }).setOrigin(0.5);
     this.add.text(360, 480, `${score}`, { ...FONT, fontSize: '160px', fontStyle: '900', color: '#ffe066' }).setOrigin(0.5);
     this.add.text(360, 590, 'очков', { ...FONT, fontSize: '36px', color: '#b8c4ff' }).setOrigin(0.5);

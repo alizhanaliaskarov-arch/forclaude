@@ -40,5 +40,15 @@ const svg = (w, h, inner, vb = '0 0 108 108') => `<svg xmlns="http://www.w3.org/
     ${svg(280, 280, art(false), '18 18 72 72')}
     <div><div style="font-size:84px;font-weight:900;color:#ffe066;text-shadow:0 6px 0 #ff7ad9">ЗВЕЗДОПАД</div>
     <div style="font-size:30px;color:#b8c4ff;margin-top:16px">Лови звёзды — уклоняйся от метеоритов</div></div></div>`, 1024, 500, path.join(__dirname, '../store/feature-1024x500.png'));
+  // iOS: иконка 1024x1024 (без прозрачности — иначе App Store отклонит) и splash 2732x2732
+  const IOS = path.join(__dirname, '../ios/App/App/Assets.xcassets');
+  if (fs.existsSync(IOS)) {
+    await p.setViewportSize({ width: 1024, height: 1024 });
+    await p.setContent(`<body style="margin:0;background:#0b0e2a">${svg(1024, 1024, art(true), '14 14 80 80')}</body>`);
+    await p.screenshot({ path: `${IOS}/AppIcon.appiconset/AppIcon-512@2x.png`, omitBackground: false, type: 'png' });
+    const S = 2732, s = S * 0.3;
+    const html = `<div style="width:${S}px;height:${S}px;background:#0b0e2a;display:flex;align-items:center;justify-content:center">${svg(s, s, art(false), '18 18 72 72')}</div>`;
+    for (const n of ['', '-1', '-2']) await shot(html, S, S, `${IOS}/Splash.imageset/splash-2732x2732${n}.png`);
+  }
   await b.close();
 })();
